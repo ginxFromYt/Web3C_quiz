@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 3 Quiz: Forms and User Input Handling</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .quiz-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .quiz-header {
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .quiz-info {
+            background-color: #e8f4fd;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        
+        .question {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .question-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .question-number {
+            background-color: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+        
+        .question-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #2c3e50;
+            flex: 1;
+        }
+        
+        .question-type {
+            background-color: #27ae60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .question-type.code { background-color: #e74c3c; }
+        .question-type.theory { background-color: #9b59b6; }
+        .question-type.practical { background-color: #f39c12; }
+        
+        .options {
+            margin-top: 15px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .option:hover {
+            background-color: #e9ecef;
+        }
+        
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+            margin-top: 2px;
+        }
+        
+        .option label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .code-snippet {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        .text-answer {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            min-height: 60px;
+            resize: vertical;
+        }
+        
+        .quiz-controls {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #dee2e6;
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background-color: #1e8449;
+        }
+        
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        
+        .btn-warning:hover {
+            background-color: #d68910;
+        }
+        
+        .results {
+            display: none;
+            background-color: #f8f9fa;
+            border: 2px solid #27ae60;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .score-display {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .score-excellent { color: #27ae60; }
+        .score-good { color: #f39c12; }
+        .score-needs-improvement { color: #e74c3c; }
+        
+        .answer-review {
+            margin-top: 20px;
+        }
+        
+        .answer-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #dee2e6;
+        }
+        
+        .answer-correct {
+            background-color: #d4edda;
+            border-left-color: #27ae60;
+        }
+        
+        .answer-incorrect {
+            background-color: #f8d7da;
+            border-left-color: #e74c3c;
+        }
+        
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #dee2e6;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer" id="timer">Time: 00:00</div>
+    
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1>Unit 3 Quiz: Forms and User Input Handling</h1>
+            <p>Test your knowledge of HTML forms, JavaScript validation, and user input handling</p>
+        </div>
+        
+        <div class="quiz-info">
+            <h3>📋 Quiz Instructions:</h3>
+            <ul>
+                <li><strong>Questions:</strong> 20 questions covering all Unit 3 topics</li>
+                <li><strong>Types:</strong> Multiple choice, code analysis, and practical application</li>
+                <li><strong>Time Limit:</strong> 30 minutes (recommended)</li>
+                <li><strong>Passing Score:</strong> 70% (14/20 correct answers)</li>
+                <li><strong>Tips:</strong> Read each question carefully and consider real-world applications</li>
+            </ul>
+        </div>
+
+        <div class="quiz-info" style="background-color: #fff3cd; border-left-color: #ffc107;">
+            <h3>👤 Student Information</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <div>
+                    <label for="studentId" style="display: block; margin-bottom: 5px; font-weight: bold;">Student ID:</label>
+                    <input type="text" id="studentId" placeholder="Enter your student ID" required 
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div>
+                    <label for="studentName" style="display: block; margin-bottom: 5px; font-weight: bold;">Full Name:</label>
+                    <input type="text" id="studentName" placeholder="Enter your full name" required
+                           style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+            </div>
+            <div style="margin-top: 10px;">
+                <button type="button" id="startQuizBtn" class="btn btn-success" onclick="startQuiz()" disabled>
+                    🚀 Start Quiz
+                </button>
+                <small style="display: block; margin-top: 5px; color: #666;">
+                    Please enter your information above to begin the quiz.
+                </small>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div id="quizContent" style="display: none;">
+        
+        <form id="quizForm">
+            <!-- Question 1 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">1</div>
+                    <div class="question-text">Which attribute specifies where form data should be sent when the form is submitted?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q1a" name="q1" value="a">
+                        <label for="q1a">method</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q1b" name="q1" value="b">
+                        <label for="q1b">action</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q1c" name="q1" value="c">
+                        <label for="q1c">target</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q1d" name="q1" value="d">
+                        <label for="q1d">enctype</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">2</div>
+                    <div class="question-text">What is the main difference between GET and POST methods?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q2a" name="q2" value="a">
+                        <label for="q2a">GET is faster than POST</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q2b" name="q2" value="b">
+                        <label for="q2b">GET sends data in the URL, POST sends data in the request body</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q2c" name="q2" value="c">
+                        <label for="q2c">GET is more secure than POST</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q2d" name="q2" value="d">
+                        <label for="q2d">There is no difference</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">3</div>
+                    <div class="question-text">Which input type should be used for password fields?</div>
+                    <div class="question-type">Basic</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q3a" name="q3" value="a">
+                        <label for="q3a">&lt;input type="text"&gt;</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q3b" name="q3" value="b">
+                        <label for="q3b">&lt;input type="password"&gt;</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q3c" name="q3" value="c">
+                        <label for="q3c">&lt;input type="hidden"&gt;</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q3d" name="q3" value="d">
+                        <label for="q3d">&lt;input type="secure"&gt;</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">4</div>
+                    <div class="question-text">How do you access the value of an input field with ID "username" using JavaScript?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q4a" name="q4" value="a">
+                        <label for="q4a">document.getElementById("username").innerHTML</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4b" name="q4" value="b">
+                        <label for="q4b">document.getElementById("username").value</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4c" name="q4" value="c">
+                        <label for="q4c">document.querySelector("username").text</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4d" name="q4" value="d">
+                        <label for="q4d">document.getElement("username").value</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">5</div>
+                    <div class="question-text">Which HTML5 attribute makes a form field required?</div>
+                    <div class="question-type">Basic</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q5a" name="q5" value="a">
+                        <label for="q5a">mandatory</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5b" name="q5" value="b">
+                        <label for="q5b">required</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5c" name="q5" value="c">
+                        <label for="q5c">validate</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5d" name="q5" value="d">
+                        <label for="q5d">necessary</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 6 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">6</div>
+                    <div class="question-text">Which of the following are valid input types in HTML5? (Select all that apply)</div>
+                    <div class="question-type">Multiple</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="q6a" name="q6" value="a">
+                        <label for="q6a">email</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q6b" name="q6" value="b">
+                        <label for="q6b">date</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q6c" name="q6" value="c">
+                        <label for="q6c">phone</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q6d" name="q6" value="d">
+                        <label for="q6d">range</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 7 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">7</div>
+                    <div class="question-text">What event should you listen for to handle form submission?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q7a" name="q7" value="a">
+                        <label for="q7a">click</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q7b" name="q7" value="b">
+                        <label for="q7b">submit</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q7c" name="q7" value="c">
+                        <label for="q7c">send</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q7d" name="q7" value="d">
+                        <label for="q7d">post</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 8 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">8</div>
+                    <div class="question-text">Which method prevents the default form submission behavior?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q8a" name="q8" value="a">
+                        <label for="q8a">event.stopPropagation()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q8b" name="q8" value="b">
+                        <label for="q8b">event.preventDefault()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q8c" name="q8" value="c">
+                        <label for="q8c">event.stopDefault()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q8d" name="q8" value="d">
+                        <label for="q8d">event.cancel()</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 9 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">9</div>
+                    <div class="question-text">What is the correct way to group radio buttons so only one can be selected?</div>
+                    <div class="question-type">Basic</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q9a" name="q9" value="a">
+                        <label for="q9a">Give them the same ID</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q9b" name="q9" value="b">
+                        <label for="q9b">Give them the same name attribute</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q9c" name="q9" value="c">
+                        <label for="q9c">Use the same class</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q9d" name="q9" value="d">
+                        <label for="q9d">Put them in the same form</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 10 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">10</div>
+                    <div class="question-text">Which validation attribute limits the maximum number of characters in an input field?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q10a" name="q10" value="a">
+                        <label for="q10a">maxlength</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q10b" name="q10" value="b">
+                        <label for="q10b">max</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q10c" name="q10" value="c">
+                        <label for="q10c">length</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q10d" name="q10" value="d">
+                        <label for="q10d">limit</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 11 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">11</div>
+                    <div class="question-text">Analyze this code snippet. What will happen when the form is submitted?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="code-snippet">
+&lt;form id="myForm"&gt;
+  &lt;input type="text" name="username" required&gt;
+  &lt;button type="submit"&gt;Submit&lt;/button&gt;
+&lt;/form&gt;
+
+&lt;script&gt;
+document.getElementById('myForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  console.log('Form submitted');
+});
+&lt;/script&gt;
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q11a" name="q11" value="a">
+                        <label for="q11a">The page will refresh and show validation errors</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q11b" name="q11" value="b">
+                        <label for="q11b">HTML5 validation will run, then preventDefault will stop submission</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q11c" name="q11" value="c">
+                        <label for="q11c">The form will submit normally to the server</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q11d" name="q11" value="d">
+                        <label for="q11d">Nothing will happen</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 12 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">12</div>
+                    <div class="question-text">What enctype should be used for forms that upload files?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q12a" name="q12" value="a">
+                        <label for="q12a">application/x-www-form-urlencoded</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q12b" name="q12" value="b">
+                        <label for="q12b">multipart/form-data</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q12c" name="q12" value="c">
+                        <label for="q12c">text/plain</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q12d" name="q12" value="d">
+                        <label for="q12d">application/json</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 13 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">13</div>
+                    <div class="question-text">Which event fires every time a user types in an input field?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q13a" name="q13" value="a">
+                        <label for="q13a">change</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q13b" name="q13" value="b">
+                        <label for="q13b">input</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q13c" name="q13" value="c">
+                        <label for="q13c">keyup</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q13d" name="q13" value="d">
+                        <label for="q13d">focus</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 14 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">14</div>
+                    <div class="question-text">What is the purpose of the pattern attribute in HTML5?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q14a" name="q14" value="a">
+                        <label for="q14a">To define a regular expression for input validation</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q14b" name="q14" value="b">
+                        <label for="q14b">To set a placeholder text</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q14c" name="q14" value="c">
+                        <label for="q14c">To format the display of input values</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q14d" name="q14" value="d">
+                        <label for="q14d">To define input suggestions</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 15 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">15</div>
+                    <div class="question-text">Which of the following are best practices for form security? (Select all that apply)</div>
+                    <div class="question-type practical">Multiple</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="q15a" name="q15" value="a">
+                        <label for="q15a">Always validate on the server-side</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q15b" name="q15" value="b">
+                        <label for="q15b">Sanitize user input to prevent XSS</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q15c" name="q15" value="c">
+                        <label for="q15c">Only use client-side validation for security</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q15d" name="q15" value="d">
+                        <label for="q15d">Use HTTPS for sensitive data</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 16 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">16</div>
+                    <div class="question-text">How do you collect all checkbox values with the same name using JavaScript?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q16a" name="q16" value="a">
+                        <label for="q16a">document.getElementById('checkboxName').value</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q16b" name="q16" value="b">
+                        <label for="q16b">document.querySelectorAll('input[name="checkboxName"]:checked')</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q16c" name="q16" value="c">
+                        <label for="q16c">document.getElementsByName('checkboxName').checked</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q16d" name="q16" value="d">
+                        <label for="q16d">document.querySelector('checkboxName').values</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 17 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">17</div>
+                    <div class="question-text">What does the FormData constructor allow you to do?</div>
+                    <div class="question-type practical">Practical</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q17a" name="q17" value="a">
+                        <label for="q17a">Only validate form data</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q17b" name="q17" value="b">
+                        <label for="q17b">Easily collect all form data including files for AJAX submission</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q17c" name="q17" value="c">
+                        <label for="q17c">Only handle file uploads</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q17d" name="q17" value="d">
+                        <label for="q17d">Format form data for display</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 18 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">18</div>
+                    <div class="question-text">Write a JavaScript function that validates if an email address is in the correct format using a regular expression.</div>
+                    <div class="question-type code">Code Writing</div>
+                </div>
+                <textarea class="text-answer" name="q18" placeholder="Write your JavaScript function here...
+Example:
+function validateEmail(email) {
+  // Your code here
+}"></textarea>
+            </div>
+
+            <!-- Question 19 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">19</div>
+                    <div class="question-text">Why is it important to prevent double form submissions?</div>
+                    <div class="question-type practical">Practical</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q19a" name="q19" value="a">
+                        <label for="q19a">To improve page loading speed</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q19b" name="q19" value="b">
+                        <label for="q19b">To prevent duplicate data entries and multiple charges</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q19c" name="q19" value="c">
+                        <label for="q19c">To reduce server storage</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q19d" name="q19" value="d">
+                        <label for="q19d">To make forms look better</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 20 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">20</div>
+                    <div class="question-text">Which of the following improve form accessibility? (Select all that apply)</div>
+                    <div class="question-type practical">Multiple</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="q20a" name="q20" value="a">
+                        <label for="q20a">Using proper label elements associated with inputs</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q20b" name="q20" value="b">
+                        <label for="q20b">Adding ARIA attributes for screen readers</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q20c" name="q20" value="c">
+                        <label for="q20c">Using only placeholder text instead of labels</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q20d" name="q20" value="d">
+                        <label for="q20d">Ensuring keyboard navigation works properly</label>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="quiz-controls">
+            <button type="button" class="btn btn-warning" onclick="saveProgress()">💾 Save Progress</button>
+            <button type="button" class="btn btn-success" onclick="submitQuiz()">🎯 Submit Quiz</button>
+            <button type="button" class="btn" onclick="resetQuiz()">🔄 Reset Quiz</button>
+        </div>
+        
+        </div> <!-- End quizContent -->
+
+        <div id="results" class="results">
+            <div class="score-display" id="scoreDisplay"></div>
+            <div id="feedback"></div>
+            <div class="answer-review" id="answerReview"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="button" class="btn" onclick="retakeQuiz()">📝 Retake Quiz</button>
+                <button type="button" class="btn btn-success" onclick="downloadResults()">📄 Download Results</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz data and configuration
+        const quizData = {
+            questions: 20,
+            timeLimit: 30 * 60, // 30 minutes in seconds
+            passingScore: 14, // 70%
+            answers: {
+                q1: 'b',  // action
+                q2: 'b',  // GET sends data in URL, POST in body
+                q3: 'b',  // input type="password"
+                q4: 'b',  // document.getElementById("username").value
+                q5: 'b',  // required
+                q6: ['a', 'b', 'd'],  // email, date, range (not phone)
+                q7: 'b',  // submit
+                q8: 'b',  // event.preventDefault()
+                q9: 'b',  // same name attribute
+                q10: 'a', // maxlength
+                q11: 'b', // HTML5 validation runs, then preventDefault stops submission
+                q12: 'b', // multipart/form-data
+                q13: 'b', // input
+                q14: 'a', // regular expression for validation
+                q15: ['a', 'b', 'd'], // server validation, sanitize input, HTTPS
+                q16: 'b', // querySelectorAll with :checked
+                q17: 'b', // collect all form data including files
+                q18: 'code', // JavaScript function (manual grading)
+                q19: 'b', // prevent duplicate entries
+                q20: ['a', 'b', 'd'] // labels, ARIA, keyboard navigation
+            }
+        };
+
+        let quizStartTime = null;
+        let timerInterval = null;
+
+        // Initialize quiz
+        document.addEventListener('DOMContentLoaded', function() {
+            setupStudentInfo();
+            // Timer will start when quiz begins
+        });
+
+        // Student information setup
+        function setupStudentInfo() {
+            const studentId = document.getElementById('studentId');
+            const studentName = document.getElementById('studentName');
+            const startBtn = document.getElementById('startQuizBtn');
+            
+            function checkStudentInfo() {
+                const hasId = studentId.value.trim().length > 0;
+                const hasName = studentName.value.trim().length > 0;
+                startBtn.disabled = !(hasId && hasName);
+            }
+            
+            studentId.addEventListener('input', checkStudentInfo);
+            studentName.addEventListener('input', checkStudentInfo);
+        }
+
+        // Start quiz function
+        function startQuiz() {
+            const studentId = document.getElementById('studentId').value.trim();
+            const studentName = document.getElementById('studentName').value.trim();
+            
+            if (!studentId || !studentName) {
+                alert('Please enter both Student ID and Full Name to begin the quiz.');
+                return;
+            }
+            
+            // Store student information
+            sessionStorage.setItem('studentId', studentId);
+            sessionStorage.setItem('studentName', studentName);
+            sessionStorage.setItem('quizStarted', 'true');
+            
+            // Hide student info section and show quiz
+            document.querySelector('.quiz-info').style.display = 'none';
+            document.getElementById('quizContent').style.display = 'block';
+            
+            // Start timer and initialize
+            startTimer();
+            loadSavedProgress();
+            updateProgress();
+            
+            // Scroll to quiz content
+            document.getElementById('quizContent').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Timer functionality
+        function startTimer() {
+            quizStartTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((new Date() - quizStartTime) / 1000);
+            const remaining = Math.max(0, quizData.timeLimit - elapsed);
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (remaining === 0) {
+                clearInterval(timerInterval);
+                alert('Time is up! Quiz will be submitted automatically.');
+                submitQuiz();
+            }
+        }
+
+        // Progress tracking
+        function updateProgress() {
+            const form = document.getElementById('quizForm');
+            const totalQuestions = quizData.questions;
+            let answeredQuestions = 0;
+
+            // Count answered questions
+            for (let i = 1; i <= totalQuestions; i++) {
+                const questionElements = form.querySelectorAll(`[name="q${i}"]`);
+                let answered = false;
+
+                questionElements.forEach(element => {
+                    if ((element.type === 'radio' || element.type === 'checkbox') && element.checked) {
+                        answered = true;
+                    } else if (element.type === 'textarea' && element.value.trim()) {
+                        answered = true;
+                    }
+                });
+
+                if (answered) answeredQuestions++;
+            }
+
+            const progress = (answeredQuestions / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        // Add event listeners for progress tracking
+        document.getElementById('quizForm').addEventListener('change', updateProgress);
+        document.getElementById('quizForm').addEventListener('input', updateProgress);
+
+        // Save progress to localStorage
+        function saveProgress() {
+            const formData = new FormData(document.getElementById('quizForm'));
+            const progress = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (progress[key]) {
+                    if (Array.isArray(progress[key])) {
+                        progress[key].push(value);
+                    } else {
+                        progress[key] = [progress[key], value];
+                    }
+                } else {
+                    progress[key] = value;
+                }
+            }
+            
+            progress.timestamp = new Date().toISOString();
+            localStorage.setItem('quizProgress', JSON.stringify(progress));
+            
+            alert('Progress saved successfully!');
+        }
+
+        // Load saved progress
+        function loadSavedProgress() {
+            const saved = localStorage.getItem('quizProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                const form = document.getElementById('quizForm');
+                
+                for (let [key, value] of Object.entries(progress)) {
+                    if (key === 'timestamp') continue;
+                    
+                    const elements = form.querySelectorAll(`[name="${key}"]`);
+                    elements.forEach(element => {
+                        if (element.type === 'checkbox' || element.type === 'radio') {
+                            if (Array.isArray(value)) {
+                                element.checked = value.includes(element.value);
+                            } else {
+                                element.checked = element.value === value;
+                            }
+                        } else if (element.type === 'textarea') {
+                            element.value = value;
+                        }
+                    });
+                }
+                
+                updateProgress();
+            }
+        }
+
+        // Submit quiz
+        function submitQuiz() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            const form = document.getElementById('quizForm');
+            const formData = new FormData(form);
+            const answers = {};
+            
+            // Collect answers
+            for (let [key, value] of formData.entries()) {
+                if (answers[key]) {
+                    if (Array.isArray(answers[key])) {
+                        answers[key].push(value);
+                    } else {
+                        answers[key] = [answers[key], value];
+                    }
+                } else {
+                    answers[key] = value;
+                }
+            }
+
+            // Calculate score
+            let correct = 0;
+            const results = [];
+
+            for (let [question, correctAnswer] of Object.entries(quizData.answers)) {
+                const userAnswer = answers[question];
+                let isCorrect = false;
+
+                if (question === 'q18') {
+                    // Code question - check if contains essential elements
+                    const code = userAnswer || '';
+                    isCorrect = code.includes('function') && 
+                               code.includes('email') && 
+                               (code.includes('test') || code.includes('match')) &&
+                               (code.includes('/') || code.includes('RegExp'));
+                } else if (Array.isArray(correctAnswer)) {
+                    // Multiple choice questions
+                    const userAnswerArray = Array.isArray(userAnswer) ? userAnswer : [userAnswer];
+                    isCorrect = correctAnswer.length === userAnswerArray.length &&
+                               correctAnswer.every(ans => userAnswerArray.includes(ans));
+                } else {
+                    // Single choice questions
+                    isCorrect = userAnswer === correctAnswer;
+                }
+
+                if (isCorrect) correct++;
+                
+                results.push({
+                    question: question,
+                    correct: isCorrect,
+                    userAnswer: userAnswer,
+                    correctAnswer: correctAnswer
+                });
+            }
+
+            const percentage = Math.round((correct / quizData.questions) * 100);
+            const passed = correct >= quizData.passingScore;
+
+            displayResults(correct, percentage, passed, results);
+            
+            // Clear saved progress
+            localStorage.removeItem('quizProgress');
+        }
+
+        // Display results
+        function displayResults(correct, percentage, passed, results) {
+            const resultsDiv = document.getElementById('results');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const feedback = document.getElementById('feedback');
+            const answerReview = document.getElementById('answerReview');
+
+            // Get student information
+            const studentId = sessionStorage.getItem('studentId') || 'Unknown';
+            const studentName = sessionStorage.getItem('studentName') || 'Unknown';
+            const completionTime = new Date().toLocaleString();
+
+            // Score display with student info
+            let scoreClass = 'score-needs-improvement';
+            if (percentage >= 90) scoreClass = 'score-excellent';
+            else if (percentage >= 70) scoreClass = 'score-good';
+
+            scoreDisplay.innerHTML = `
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <strong>Student:</strong> ${studentName} (ID: ${studentId})<br>
+                    <strong>Completed:</strong> ${completionTime}
+                </div>
+                <div class="${scoreClass}">
+                    ${correct}/${quizData.questions} Correct (${percentage}%)
+                </div>
+                <div style="font-size: 18px; margin-top: 10px;">
+                    ${passed ? '✅ PASSED' : '❌ FAILED'} 
+                    (Need ${quizData.passingScore}/${quizData.questions} to pass)
+                </div>
+            `;
+
+            // Feedback
+            let feedbackText = '';
+            if (percentage >= 90) {
+                feedbackText = '🎉 Excellent work! You have mastered forms and user input handling.';
+            } else if (percentage >= 80) {
+                feedbackText = '👍 Great job! You have a solid understanding with minor areas to review.';
+            } else if (percentage >= 70) {
+                feedbackText = '✅ Good work! You passed, but consider reviewing the topics you missed.';
+            } else {
+                feedbackText = '📚 Keep studying! Review the course materials and try again.';
+            }
+
+            feedback.innerHTML = `<p style="font-size: 16px; text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">${feedbackText}</p>`;
+
+            // Answer review
+            let reviewHTML = '<h3>📋 Answer Review:</h3>';
+            
+            const questionTexts = [
+                'Which attribute specifies where form data should be sent?',
+                'Main difference between GET and POST methods?',
+                'Input type for password fields?',
+                'How to access input value with JavaScript?',
+                'HTML5 attribute to make field required?',
+                'Valid HTML5 input types?',
+                'Event for handling form submission?',
+                'Method to prevent default form submission?',
+                'How to group radio buttons?',
+                'Attribute to limit maximum characters?',
+                'Code analysis: form submission behavior?',
+                'Enctype for file uploads?',
+                'Event that fires when user types?',
+                'Purpose of pattern attribute?',
+                'Form security best practices?',
+                'How to collect checkbox values?',
+                'What does FormData constructor do?',
+                'JavaScript email validation function',
+                'Why prevent double submissions?',
+                'What improves form accessibility?'
+            ];
+
+            results.forEach((result, index) => {
+                const questionNum = index + 1;
+                const cssClass = result.correct ? 'answer-correct' : 'answer-incorrect';
+                const icon = result.correct ? '✅' : '❌';
+                
+                reviewHTML += `
+                    <div class="answer-item ${cssClass}">
+                        <strong>${icon} Question ${questionNum}:</strong> ${questionTexts[index]}<br>
+                        <strong>Your answer:</strong> ${formatAnswer(result.userAnswer)}<br>
+                        ${!result.correct ? `<strong>Correct answer:</strong> ${formatAnswer(result.correctAnswer)}<br>` : ''}
+                    </div>
+                `;
+            });
+
+            answerReview.innerHTML = reviewHTML;
+            resultsDiv.classList.add('show');
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function formatAnswer(answer) {
+            if (!answer) return 'Not answered';
+            if (Array.isArray(answer)) return answer.join(', ');
+            if (typeof answer === 'string' && answer.length > 50) {
+                return answer.substring(0, 50) + '...';
+            }
+            return answer;
+        }
+
+        // Reset quiz
+        function resetQuiz() {
+            if (confirm('Are you sure you want to reset the quiz? All progress will be lost.')) {
+                document.getElementById('quizForm').reset();
+                document.getElementById('results').classList.remove('show');
+                localStorage.removeItem('quizProgress');
+                
+                // Restart timer
+                if (timerInterval) clearInterval(timerInterval);
+                startTimer();
+                updateProgress();
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            }
+        }
+
+        // Retake quiz
+        function retakeQuiz() {
+            resetQuiz();
+        }
+
+        // Download results
+        function downloadResults() {
+            const studentId = sessionStorage.getItem('studentId') || 'Unknown';
+            const studentName = sessionStorage.getItem('studentName') || 'Unknown';
+            const completionTime = new Date().toLocaleString();
+            
+            const resultsText = document.getElementById('results').textContent;
+            const header = `Unit 3: Forms and User Input Handling - Quiz Results\n` +
+                          `=====================================\n` +
+                          `Student: ${studentName}\n` +
+                          `Student ID: ${studentId}\n` +
+                          `Completed: ${completionTime}\n` +
+                          `=====================================\n\n`;
+            
+            const fullResults = header + resultsText;
+            
+            const blob = new Blob([fullResults], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Unit3_Quiz_${studentId}_${studentName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
