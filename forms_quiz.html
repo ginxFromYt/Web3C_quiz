@@ -277,11 +277,28 @@
 
         <div class="quiz-info" style="background-color: #fff3cd; border-left-color: #ffc107;">
             <h3>👤 Student Information</h3>
+            
+            <!-- Time and attempt restrictions notice -->
+            <div id="timeRestrictionNotice" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; 
+                                                    padding: 15px; margin: 15px 0; border-radius: 5px; display: none;">
+                <h4>⏰ Quiz Access Restricted</h4>
+                <p id="restrictionMessage"></p>
+            </div>
+            
+            <!-- Student ID check notice -->
+            <div id="attemptWarning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; 
+                                              padding: 15px; margin: 15px 0; border-radius: 5px; display: none;">
+                <h4>⚠️ Multiple Attempt Warning</h4>
+                <p>This Student ID has already been used to submit the quiz. Only one attempt is allowed per student.</p>
+                <p><strong>If this is a mistake, please contact your instructor immediately.</strong></p>
+            </div>
+            
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
                 <div>
                     <label for="studentId" style="display: block; margin-bottom: 5px; font-weight: bold;">Student ID:</label>
                     <input type="text" id="studentId" placeholder="Enter your student ID" required 
                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div id="studentIdFeedback" style="font-size: 12px; margin-top: 3px;"></div>
                 </div>
                 <div>
                     <label for="studentName" style="display: block; margin-bottom: 5px; font-weight: bold;">Full Name:</label>
@@ -289,7 +306,10 @@
                            style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
             </div>
-            <div style="margin-top: 10px;">
+            
+            <!-- Quiz availability status -->
+            <div id="quizStatus" style="margin-top: 15px;">
+                <div id="timeRemaining" style="font-size: 14px; color: #666; margin-bottom: 10px;"></div>
                 <button type="button" id="startQuizBtn" class="btn btn-success" onclick="startQuiz()" disabled>
                     🚀 Start Quiz
                 </button>
@@ -887,6 +907,8 @@ function validateEmail(email) {
             questions: 20,
             timeLimit: 30 * 60, // 30 minutes in seconds
             passingScore: 14, // 70%
+            deadlineTime: "10:00", // 10:00 AM deadline
+            deadlineDate: "2025-09-08", // Set this to your quiz date (YYYY-MM-DD)
             answers: {
                 q1: 'b',  // action
                 q2: 'b',  // GET sends data in URL, POST in body
@@ -913,30 +935,113 @@ function validateEmail(email) {
 
         let quizStartTime = null;
         let timerInterval = null;
+        let attemptedStudentIds = new Set(); // Track attempted student IDs
 
         // Initialize quiz
         document.addEventListener('DOMContentLoaded', function() {
             setupStudentInfo();
+            checkQuizAvailability();
+            loadAttemptedStudentIds();
             // Timer will start when quiz begins
         });
+
+        // Check if quiz is available based on time restrictions
+        function checkQuizAvailability() {
+            const now = new Date();
+            const deadlineDateTime = new Date(`${quizData.deadlineDate}T${quizData.deadlineTime}:00`);
+            
+            const timeRemainingElement = document.getElementById('timeRemaining');
+            const restrictionNotice = document.getElementById('timeRestrictionNotice');
+            const restrictionMessage = document.getElementById('restrictionMessage');
+            const startBtn = document.getElementById('startQuizBtn');
+            
+            if (now > deadlineDateTime) {
+                // Quiz deadline has passed
+                restrictionNotice.style.display = 'block';
+                restrictionMessage.innerHTML = `
+                    <strong>Quiz deadline has passed!</strong><br>
+                    The quiz was available until ${quizData.deadlineTime} AM on ${quizData.deadlineDate}.<br>
+                    Please contact your instructor if you believe this is an error.
+                `;
+                startBtn.style.display = 'none';
+                timeRemainingElement.style.display = 'none';
+                return false;
+            } else {
+                // Quiz is still available - show countdown
+                const timeRemaining = deadlineDateTime - now;
+                const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                
+                timeRemainingElement.innerHTML = `
+                    ⏰ <strong>Quiz available until ${quizData.deadlineTime} AM on ${quizData.deadlineDate}</strong><br>
+                    Time remaining: ${hours} hours and ${minutes} minutes
+                `;
+                timeRemainingElement.style.color = hours < 1 ? '#dc3545' : '#28a745';
+                
+                // Update countdown every minute
+                setTimeout(checkQuizAvailability, 60000);
+                return true;
+            }
+        }
+
+        // Load previously attempted student IDs from localStorage
+        function loadAttemptedStudentIds() {
+            const stored = localStorage.getItem('attemptedStudentIds');
+            if (stored) {
+                attemptedStudentIds = new Set(JSON.parse(stored));
+            }
+        }
+
+        // Save attempted student ID to localStorage
+        function saveAttemptedStudentId(studentId) {
+            attemptedStudentIds.add(studentId);
+            localStorage.setItem('attemptedStudentIds', JSON.stringify([...attemptedStudentIds]));
+        }
+
+        // Check if student ID has already been used
+        function checkStudentIdAttempt(studentId) {
+            return attemptedStudentIds.has(studentId);
+        }
 
         // Student information setup
         function setupStudentInfo() {
             const studentId = document.getElementById('studentId');
             const studentName = document.getElementById('studentName');
             const startBtn = document.getElementById('startQuizBtn');
+            const attemptWarning = document.getElementById('attemptWarning');
+            const studentIdFeedback = document.getElementById('studentIdFeedback');
             
             function checkStudentInfo() {
                 const hasId = studentId.value.trim().length > 0;
                 const hasName = studentName.value.trim().length > 0;
-                startBtn.disabled = !(hasId && hasName);
+                const quizAvailable = checkQuizAvailability();
+                
+                // Check if student ID has been used before
+                if (hasId && checkStudentIdAttempt(studentId.value.trim())) {
+                    attemptWarning.style.display = 'block';
+                    studentIdFeedback.innerHTML = '<span style="color: #dc3545;">❌ This Student ID has already been used</span>';
+                    startBtn.disabled = true;
+                    return;
+                } else {
+                    attemptWarning.style.display = 'none';
+                    if (hasId) {
+                        studentIdFeedback.innerHTML = '<span style="color: #28a745;">✅ Student ID available</span>';
+                    } else {
+                        studentIdFeedback.innerHTML = '';
+                    }
+                }
+                
+                startBtn.disabled = !(hasId && hasName && quizAvailable);
             }
             
             studentId.addEventListener('input', checkStudentInfo);
             studentName.addEventListener('input', checkStudentInfo);
+            
+            // Check initially
+            checkStudentInfo();
         }
 
-        // Start quiz function
+        // Start quiz function with enhanced security
         function startQuiz() {
             const studentId = document.getElementById('studentId').value.trim();
             const studentName = document.getElementById('studentName').value.trim();
@@ -946,10 +1051,53 @@ function validateEmail(email) {
                 return;
             }
             
+            // Double-check quiz availability
+            if (!checkQuizAvailability()) {
+                alert('Quiz is no longer available. Please check the deadline.');
+                return;
+            }
+            
+            // Double-check student ID hasn't been used
+            if (checkStudentIdAttempt(studentId)) {
+                alert('This Student ID has already been used to take the quiz. Only one attempt is allowed per student.');
+                return;
+            }
+            
+            // Confirm student wants to start (one chance only)
+            const confirmStart = confirm(
+                `⚠️ IMPORTANT: ONE ATTEMPT ONLY\n\n` +
+                `Student ID: ${studentId}\n` +
+                `Name: ${studentName}\n\n` +
+                `You have only ONE attempt at this quiz. Once you start, your Student ID will be recorded and cannot be used again.\n\n` +
+                `Are you sure you want to start the quiz now?`
+            );
+            
+            if (!confirmStart) {
+                return;
+            }
+            
+            // Record this student ID as attempted
+            saveAttemptedStudentId(studentId);
+            
             // Store student information
             sessionStorage.setItem('studentId', studentId);
             sessionStorage.setItem('studentName', studentName);
             sessionStorage.setItem('quizStarted', 'true');
+            sessionStorage.setItem('quizStartTime', new Date().toISOString());
+            
+            // Disable back button and page refresh
+            window.history.pushState(null, null, window.location.href);
+            window.onpopstate = function() {
+                window.history.pushState(null, null, window.location.href);
+                alert('⚠️ Navigation is disabled during the quiz. Please complete your quiz.');
+            };
+            
+            // Warn before page unload
+            window.addEventListener('beforeunload', function(e) {
+                e.preventDefault();
+                e.returnValue = 'Are you sure you want to leave? Your quiz progress may be lost.';
+                return e.returnValue;
+            });
             
             // Hide student info section and show quiz
             document.querySelector('.quiz-info').style.display = 'none';
@@ -962,6 +1110,8 @@ function validateEmail(email) {
             
             // Scroll to quiz content
             document.getElementById('quizContent').scrollIntoView({ behavior: 'smooth' });
+            
+            console.log(`🚀 Quiz started for Student ID: ${studentId} at ${new Date().toISOString()}`);
         }
 
         // Timer functionality
@@ -1133,6 +1283,21 @@ function validateEmail(email) {
             
             // Submit results to Netlify Forms for database recording
             submitResultsToDatabase(correct, percentage, passed, results);
+            
+            // Record quiz completion and prevent future attempts
+            const studentId = sessionStorage.getItem('studentId');
+            if (studentId) {
+                // Mark as completed (different from just attempted)
+                const completedIds = JSON.parse(localStorage.getItem('completedStudentIds') || '[]');
+                if (!completedIds.includes(studentId)) {
+                    completedIds.push(studentId);
+                    localStorage.setItem('completedStudentIds', JSON.stringify(completedIds));
+                }
+            }
+            
+            // Remove beforeunload warning since quiz is complete
+            window.removeEventListener('beforeunload', function() {});
+            window.onbeforeunload = null;
             
             // Clear saved progress
             localStorage.removeItem('quizProgress');

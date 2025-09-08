@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Admin Panel - Instructor Controls</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .admin-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .admin-header {
+            text-align: center;
+            border-bottom: 3px solid #dc3545;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .control-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .warning-box {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .danger-box {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+        
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+        }
+        
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .student-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: white;
+        }
+        
+        .student-item {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .student-item:last-child {
+            border-bottom: none;
+        }
+        
+        .code-block {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>🔐 Quiz Administration Panel</h1>
+            <p>Manage quiz restrictions, deadlines, and student attempts</p>
+        </div>
+
+        <div class="warning-box">
+            <h3>⚠️ Instructor Access Only</h3>
+            <p>This page contains administrative controls for the quiz system. Only authorized instructors should access this page.</p>
+        </div>
+
+        <div class="control-section">
+            <h3>📊 Current Quiz Status</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalAttempts">0</div>
+                    <div>Total Attempts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="completedQuizzes">0</div>
+                    <div>Completed Quizzes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="timeRemaining">--</div>
+                    <div>Time Until Deadline</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="quizStatus">Active</div>
+                    <div>Current Status</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h3>⏰ Deadline Management</h3>
+            <div class="info-box">
+                <p><strong>Current Deadline:</strong> <span id="currentDeadline">September 8, 2025 at 10:00 AM</span></p>
+            </div>
+            
+            <div class="form-group">
+                <label for="newDeadlineDate">New Deadline Date:</label>
+                <input type="date" id="newDeadlineDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="newDeadlineTime">New Deadline Time:</label>
+                <input type="time" id="newDeadlineTime" value="10:00">
+            </div>
+            
+            <button class="btn btn-warning" onclick="updateDeadline()">
+                ⏰ Update Deadline
+            </button>
+        </div>
+
+        <div class="control-section">
+            <h3>👥 Student Attempt Management</h3>
+            
+            <div class="info-box">
+                <h4>Attempted Student IDs:</h4>
+                <div id="attemptedStudentsList" class="student-list">
+                    <p>No attempts recorded yet.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="studentIdToRemove">Remove Student ID from Attempts:</label>
+                <input type="text" id="studentIdToRemove" placeholder="Enter Student ID to allow retry">
+            </div>
+            
+            <button class="btn btn-warning" onclick="removeStudentAttempt()">
+                🔄 Allow Student Retry
+            </button>
+            
+            <div class="danger-box">
+                <h4>⚠️ Reset All Attempts</h4>
+                <p>This will clear all student attempt records, allowing everyone to retake the quiz.</p>
+                <button class="btn btn-danger" onclick="resetAllAttempts()">
+                    🗑️ Reset All Student Attempts
+                </button>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h3>🛠️ Quiz Controls</h3>
+            
+            <div class="warning-box">
+                <p><strong>Emergency Controls:</strong> Use these buttons for urgent situations only.</p>
+            </div>
+            
+            <button class="btn btn-danger" onclick="disableQuiz()">
+                🚫 Disable Quiz Immediately
+            </button>
+            
+            <button class="btn btn-success" onclick="enableQuiz()">
+                ✅ Re-enable Quiz
+            </button>
+            
+            <button class="btn btn-warning" onclick="extendDeadline()">
+                ⏰ Extend Deadline by 1 Hour
+            </button>
+        </div>
+
+        <div class="control-section">
+            <h3>📋 Instructions for Students</h3>
+            <p>Share this updated information with your students:</p>
+            
+            <div class="code-block">
+📋 QUIZ INSTRUCTIONS - UPDATED
+
+⚠️ IMPORTANT RESTRICTIONS:
+• Quiz deadline: [Current Deadline]
+• ONE ATTEMPT ONLY per student
+• No retakes allowed
+• 30-minute time limit once started
+
+🎯 How to take the quiz:
+1. Go to: [YOUR-QUIZ-URL]
+2. Enter your Student ID and Full Name
+3. Confirm you want to start (cannot undo!)
+4. Complete all 20 questions within 30 minutes
+5. Submit quiz - results automatically recorded
+
+❌ What happens if you try multiple times:
+• Your Student ID is recorded on first attempt
+• System will block additional attempts
+• Contact instructor for technical issues only
+
+⏰ Time Management:
+• Quiz closes at [Deadline Time]
+• Start early to avoid last-minute issues
+• Allow full 30 minutes for completion
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h3>🔧 Technical Information</h3>
+            <div class="info-box">
+                <h4>How the Restriction System Works:</h4>
+                <ul>
+                    <li><strong>Time Control:</strong> JavaScript checks current time against deadline</li>
+                    <li><strong>Attempt Tracking:</strong> Student IDs stored in browser localStorage</li>
+                    <li><strong>Database Recording:</strong> All submissions go to Netlify Forms</li>
+                    <li><strong>Backup Security:</strong> Multiple validation points prevent bypassing</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="forms_quiz.html" target="_blank" class="btn">
+                🎯 View Quiz (Student View)
+            </a>
+            <a href="https://app.netlify.com" target="_blank" class="btn btn-success">
+                📊 Netlify Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Load and display current statistics
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCurrentStats();
+            updateDeadlineDisplay();
+            loadAttemptedStudents();
+            
+            // Update stats every 30 seconds
+            setInterval(loadCurrentStats, 30000);
+        });
+
+        function loadCurrentStats() {
+            const attemptedIds = JSON.parse(localStorage.getItem('attemptedStudentIds') || '[]');
+            const completedIds = JSON.parse(localStorage.getItem('completedStudentIds') || '[]');
+            
+            document.getElementById('totalAttempts').textContent = attemptedIds.length;
+            document.getElementById('completedQuizzes').textContent = completedIds.length;
+            
+            // Calculate time remaining
+            const now = new Date();
+            const deadline = new Date('2025-09-08T10:00:00');
+            
+            if (now > deadline) {
+                document.getElementById('timeRemaining').textContent = 'EXPIRED';
+                document.getElementById('quizStatus').textContent = 'Closed';
+                document.getElementById('quizStatus').style.color = '#dc3545';
+            } else {
+                const timeRemaining = deadline - now;
+                const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                
+                document.getElementById('timeRemaining').textContent = `${hours}h ${minutes}m`;
+                document.getElementById('quizStatus').textContent = 'Active';
+                document.getElementById('quizStatus').style.color = '#28a745';
+            }
+        }
+
+        function updateDeadlineDisplay() {
+            const deadline = new Date('2025-09-08T10:00:00');
+            document.getElementById('currentDeadline').textContent = deadline.toLocaleString();
+        }
+
+        function loadAttemptedStudents() {
+            const attemptedIds = JSON.parse(localStorage.getItem('attemptedStudentIds') || '[]');
+            const listContainer = document.getElementById('attemptedStudentsList');
+            
+            if (attemptedIds.length === 0) {
+                listContainer.innerHTML = '<p>No attempts recorded yet.</p>';
+                return;
+            }
+            
+            listContainer.innerHTML = attemptedIds.map(id => `
+                <div class="student-item">
+                    <span>${id}</span>
+                    <button class="btn" style="padding: 2px 8px; font-size: 12px;" 
+                            onclick="removeSpecificStudent('${id}')">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeStudentAttempt() {
+            const studentId = document.getElementById('studentIdToRemove').value.trim();
+            if (!studentId) {
+                alert('Please enter a Student ID to remove.');
+                return;
+            }
+            
+            const confirmed = confirm(`Remove ${studentId} from attempted list? This will allow them to retake the quiz.`);
+            if (!confirmed) return;
+            
+            removeSpecificStudent(studentId);
+            document.getElementById('studentIdToRemove').value = '';
+        }
+
+        function removeSpecificStudent(studentId) {
+            let attemptedIds = JSON.parse(localStorage.getItem('attemptedStudentIds') || '[]');
+            let completedIds = JSON.parse(localStorage.getItem('completedStudentIds') || '[]');
+            
+            attemptedIds = attemptedIds.filter(id => id !== studentId);
+            completedIds = completedIds.filter(id => id !== studentId);
+            
+            localStorage.setItem('attemptedStudentIds', JSON.stringify(attemptedIds));
+            localStorage.setItem('completedStudentIds', JSON.stringify(completedIds));
+            
+            loadAttemptedStudents();
+            loadCurrentStats();
+            
+            alert(`Student ID ${studentId} has been removed. They can now retake the quiz.`);
+        }
+
+        function resetAllAttempts() {
+            const confirmed = confirm('⚠️ DANGER: This will reset ALL student attempts. Everyone will be able to retake the quiz. Are you sure?');
+            if (!confirmed) return;
+            
+            const doubleConfirm = confirm('This action cannot be undone. Type "RESET" in the next dialog to confirm.');
+            if (!doubleConfirm) return;
+            
+            const verification = prompt('Type "RESET" to confirm:');
+            if (verification !== 'RESET') {
+                alert('Reset cancelled.');
+                return;
+            }
+            
+            localStorage.removeItem('attemptedStudentIds');
+            localStorage.removeItem('completedStudentIds');
+            
+            loadAttemptedStudents();
+            loadCurrentStats();
+            
+            alert('✅ All student attempts have been reset.');
+        }
+
+        function updateDeadline() {
+            const newDate = document.getElementById('newDeadlineDate').value;
+            const newTime = document.getElementById('newDeadlineTime').value;
+            
+            if (!newDate || !newTime) {
+                alert('Please select both date and time for the new deadline.');
+                return;
+            }
+            
+            const confirmed = confirm(`Set new deadline to ${newDate} at ${newTime}?`);
+            if (!confirmed) return;
+            
+            alert('⚠️ Note: To apply the new deadline, you need to update the quiz code and redeploy. This admin panel shows local storage data only.');
+        }
+
+        function disableQuiz() {
+            const confirmed = confirm('Disable quiz immediately? Students will not be able to start or continue.');
+            if (!confirmed) return;
+            
+            localStorage.setItem('quizDisabled', 'true');
+            alert('Quiz has been disabled. Note: This affects only this browser. For full control, update the quiz code.');
+        }
+
+        function enableQuiz() {
+            localStorage.removeItem('quizDisabled');
+            alert('Quiz has been re-enabled in this browser.');
+        }
+
+        function extendDeadline() {
+            const confirmed = confirm('Extend deadline by 1 hour? This is an emergency function only.');
+            if (!confirmed) return;
+            
+            alert('⚠️ Note: To actually extend the deadline, you need to update the quiz code. This admin panel shows current settings only.');
+        }
+    </script>
+</body>
+</html>
