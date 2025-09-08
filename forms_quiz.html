@@ -847,6 +847,19 @@ function validateEmail(email) {
             </div>
         </form>
 
+        <!-- Hidden Netlify form for collecting results -->
+        <form name="quiz-results" netlify netlify-honeypot="bot-field" hidden>
+            <input type="text" name="studentId" />
+            <input type="text" name="studentName" />
+            <input type="number" name="score" />
+            <input type="text" name="status" />
+            <input type="text" name="timestamp" />
+            <input type="text" name="correctAnswers" />
+            <input type="text" name="totalQuestions" />
+            <input type="text" name="timeSpent" />
+            <input type="text" name="detailedResults" />
+        </form>
+
         <div class="quiz-controls">
             <button type="button" class="btn btn-warning" onclick="saveProgress()">💾 Save Progress</button>
             <button type="button" class="btn btn-success" onclick="submitQuiz()">🎯 Submit Quiz</button>
@@ -1116,8 +1129,87 @@ function validateEmail(email) {
 
             displayResults(correct, percentage, passed, results);
             
+            // Submit results to Netlify Forms for database recording
+            submitResultsToDatabase(correct, percentage, passed, results);
+            
             // Clear saved progress
             localStorage.removeItem('quizProgress');
+        }
+
+        // Submit results to Netlify Forms database
+        function submitResultsToDatabase(correct, percentage, passed, results) {
+            const studentId = sessionStorage.getItem('studentId') || 'Unknown';
+            const studentName = sessionStorage.getItem('studentName') || 'Unknown';
+            const completionTime = new Date().toISOString();
+            const quizEndTime = new Date();
+            const timeSpent = Math.round((quizEndTime - quizStartTime) / 1000 / 60); // minutes
+            
+            // Prepare detailed results summary
+            const detailedResults = results.map((result, index) => {
+                return `Q${index + 1}: ${result.correct ? 'Correct' : 'Incorrect'}`;
+            }).join(', ');
+            
+            // Create form data for Netlify
+            const formData = new FormData();
+            formData.append('form-name', 'quiz-results');
+            formData.append('studentId', studentId);
+            formData.append('studentName', studentName);
+            formData.append('score', percentage);
+            formData.append('status', passed ? 'PASSED' : 'FAILED');
+            formData.append('timestamp', completionTime);
+            formData.append('correctAnswers', correct);
+            formData.append('totalQuestions', quizData.questions);
+            formData.append('timeSpent', timeSpent);
+            formData.append('detailedResults', detailedResults);
+            
+            // Submit to Netlify Forms
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    console.log('✅ Results successfully submitted to database');
+                    
+                    // Show success message to student
+                    const successDiv = document.createElement('div');
+                    successDiv.innerHTML = `
+                        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; 
+                                    padding: 15px; margin: 15px 0; border-radius: 5px; text-align: center;">
+                            <strong>✅ Results Submitted Successfully!</strong><br>
+                            Your quiz results have been automatically recorded. 
+                            You may also download your results for your records.
+                        </div>
+                    `;
+                    document.getElementById('results').prepend(successDiv);
+                } else {
+                    console.warn('⚠️ Database submission failed, but quiz completed successfully');
+                    
+                    // Show fallback message
+                    const warningDiv = document.createElement('div');
+                    warningDiv.innerHTML = `
+                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; 
+                                    padding: 15px; margin: 15px 0; border-radius: 5px; text-align: center;">
+                            <strong>⚠️ Auto-submission unavailable</strong><br>
+                            Please download your results and email them to your instructor.
+                        </div>
+                    `;
+                    document.getElementById('results').prepend(warningDiv);
+                }
+            }).catch(error => {
+                console.error('Database submission error:', error);
+                
+                // Show error message with fallback instructions
+                const errorDiv = document.createElement('div');
+                errorDiv.innerHTML = `
+                    <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; 
+                                padding: 15px; margin: 15px 0; border-radius: 5px; text-align: center;">
+                        <strong>📧 Please Email Your Results</strong><br>
+                        Auto-submission is temporarily unavailable. 
+                        Please download and email your results to your instructor.
+                    </div>
+                `;
+                document.getElementById('results').prepend(errorDiv);
+            });
         }
 
         // Display results
