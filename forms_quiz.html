@@ -1352,7 +1352,7 @@ function validateEmail(email) {
                 // For now, we'll use the GitHub Pages URL but you need to deploy this to Netlify
                 console.log('⚠️ GitHub Pages detected - Netlify Forms not available here');
                 console.log('� To enable automatic database recording, deploy this to Netlify');
-                throw new Error('Netlify Forms only work on Netlify hosting');
+                submitUrl = 'https://fastidious-tartufo-752929.netlify.app/';
             }
             
             console.log('📤 Submitting to:', submitUrl);
@@ -1382,7 +1382,8 @@ function validateEmail(email) {
         function submitToNetlifyFormsLegacy(formData) {
             // Create a temporary form and submit it naturally
             const tempForm = document.createElement('form');
-            tempForm.action = '/';
+            tempForm.action = window.location.hostname.includes('github.io') ? 
+                              'https://fastidious-tartufo-752929.netlify.app/' : '/';
             tempForm.method = 'POST';
             tempForm.style.display = 'none';
             
