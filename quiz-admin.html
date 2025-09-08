@@ -212,7 +212,7 @@
         <div class="control-section">
             <h3>⏰ Deadline Management</h3>
             <div class="info-box">
-                <p><strong>Current Deadline:</strong> <span id="currentDeadline">September 8, 2025 at 10:00 AM</span></p>
+                <p><strong>Current Deadline:</strong> <span id="currentDeadline">September 8, 2025 at 11:00 AM</span></p>
             </div>
             
             <div class="form-group">
@@ -222,7 +222,7 @@
             
             <div class="form-group">
                 <label for="newDeadlineTime">New Deadline Time:</label>
-                <input type="time" id="newDeadlineTime" value="10:00">
+                <input type="time" id="newDeadlineTime" value="11:00">
             </div>
             
             <button class="btn btn-warning" onclick="updateDeadline()">
@@ -353,7 +353,7 @@
             
             // Calculate time remaining
             const now = new Date();
-            const deadline = new Date('2025-09-08T10:00:00');
+            const deadline = new Date('2025-09-08T11:00:00');
             
             if (now > deadline) {
                 document.getElementById('timeRemaining').textContent = 'EXPIRED';
@@ -371,7 +371,7 @@
         }
 
         function updateDeadlineDisplay() {
-            const deadline = new Date('2025-09-08T10:00:00');
+            const deadline = new Date('2025-09-08T11:00:00');
             document.getElementById('currentDeadline').textContent = deadline.toLocaleString();
         }
 
