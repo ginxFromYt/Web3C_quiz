@@ -1340,43 +1340,99 @@ function validateEmail(email) {
 
         // Try Netlify Forms submission
         function submitToNetlifyForms(formData) {
-            // This works only on Netlify hosting, not GitHub Pages
-            fetch('/', {
+            // Detect if we're on Netlify hosting
+            const isNetlify = window.location.hostname.includes('netlify.app') || 
+                             window.location.hostname.includes('netlify.com') ||
+                             document.querySelector('meta[name="netlify"]');
+            
+            let submitUrl = '/';
+            
+            // If on GitHub Pages, try to submit to your Netlify site directly
+            if (window.location.hostname.includes('github.io')) {
+                // For now, we'll use the GitHub Pages URL but you need to deploy this to Netlify
+                console.log('⚠️ GitHub Pages detected - Netlify Forms not available here');
+                console.log('� To enable automatic database recording, deploy this to Netlify');
+                throw new Error('Netlify Forms only work on Netlify hosting');
+            }
+            
+            console.log('📤 Submitting to:', submitUrl);
+            
+            fetch(submitUrl, {
                 method: 'POST',
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: new URLSearchParams(formData).toString()
             }).then(response => {
-                console.log('📡 Netlify response status:', response.status);
-                if (response.ok) {
-                    console.log('✅ Results successfully submitted to Netlify database');
-                    showSuccessMessage();
+                console.log('📡 Response status:', response.status);
+                if (response.ok || response.status === 200) {
+                    console.log('✅ Results successfully submitted to Netlify Forms');
+                    showSuccessMessage('Database submission successful! Results recorded.');
+                    return true;
                 } else {
-                    throw new Error(`Netlify Forms HTTP ${response.status}`);
+                    throw new Error(`HTTP ${response.status}`);
                 }
             }).catch(error => {
-                console.warn('⚠️ Netlify Forms not available (expected on GitHub Pages):', error.message);
-                // This is expected on GitHub Pages - not an error
+                console.warn('⚠️ Netlify Forms submission failed:', error.message);
+                
+                // Fallback: Try the old working method
+                return submitToNetlifyFormsLegacy(formData);
             });
+        }
+
+        // Legacy submission method that was working before
+        function submitToNetlifyFormsLegacy(formData) {
+            // Create a temporary form and submit it naturally
+            const tempForm = document.createElement('form');
+            tempForm.action = '/';
+            tempForm.method = 'POST';
+            tempForm.style.display = 'none';
+            
+            // Add all form data as hidden inputs
+            for (let [key, value] of formData.entries()) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                tempForm.appendChild(input);
+            }
+            
+            document.body.appendChild(tempForm);
+            
+            // Submit and clean up
+            try {
+                tempForm.submit();
+                console.log('✅ Legacy form submission attempted');
+                showSuccessMessage('Results submitted! Check Netlify dashboard to confirm.');
+            } catch (error) {
+                console.error('❌ Legacy submission failed:', error);
+                showSuccessMessage('Please download results as backup.');
+            } finally {
+                document.body.removeChild(tempForm);
+            }
         }
 
         // Alternative submission method using email service
         function submitToEmailService(studentId, studentName, percentage, passed, detailedResults) {
-            // For GitHub Pages deployment, we'll show success and provide download
-            console.log('📧 Using download method for GitHub Pages hosting');
+            console.log('📧 Using backup download method - Database recording not available on this hosting');
             
-            // Show success message since download backup is available
+            // Show informative message about hosting requirements
             setTimeout(() => {
-                showSuccessMessage();
-            }, 1000);
+                showSuccessMessage(
+                    '⚠️ Automatic database recording not available on GitHub Pages hosting. ' +
+                    'Results saved locally. Please download and email to instructor. ' +
+                    '<br><small>To enable automatic recording, deploy this quiz to Netlify hosting.</small>'
+                );
+            }, 500);
         }
 
-        function showSuccessMessage() {
+        function showSuccessMessage(customMessage = null) {
+            const message = customMessage || 'Your results have been recorded. Please download your results file and submit it to your instructor.';
+            
             const successDiv = document.createElement('div');
             successDiv.innerHTML = `
                 <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; 
                             padding: 15px; margin: 15px 0; border-radius: 5px; text-align: center;">
                     <strong>✅ Quiz Completed Successfully!</strong><br>
-                    Your results have been recorded. Please download your results file and submit it to your instructor.
+                    ${message}
                     <br><br>
                     <button onclick="downloadResults()" style="background-color: #28a745; color: white; 
                             padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
