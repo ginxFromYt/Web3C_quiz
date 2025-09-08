@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netlify Forms Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .info {
+            background-color: #e8f4fd;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .test-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Netlify Forms Test Page</h1>
+    
+    <div class="info">
+        <h3>Purpose:</h3>
+        <p>This page tests if Netlify Forms is properly configured. Submit this test form first, then check your Netlify dashboard to see if it appears in the Forms section.</p>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Test Form (HTML Method)</h3>
+        <form name="test-form" method="POST" netlify>
+            <input type="hidden" name="form-name" value="test-form" />
+            
+            <div class="form-group">
+                <label for="testName">Your Name:</label>
+                <input type="text" id="testName" name="testName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="testEmail">Email:</label>
+                <input type="email" id="testEmail" name="testEmail" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="testMessage">Test Message:</label>
+                <textarea id="testMessage" name="testMessage" rows="3" required></textarea>
+            </div>
+            
+            <button type="submit">Submit Test Form</button>
+        </form>
+    </div>
+
+    <div class="test-section">
+        <h3>🚀 JavaScript Test</h3>
+        <p>Click this button to test JavaScript form submission (like your quiz uses):</p>
+        
+        <form name="js-test-form" method="POST" netlify style="display: none;">
+            <input type="hidden" name="form-name" value="js-test-form" />
+            <input type="text" name="jsTestData" />
+            <input type="text" name="timestamp" />
+        </form>
+        
+        <button type="button" onclick="testJavaScriptSubmission()">Test JS Submission</button>
+        <div id="jsTestResult"></div>
+    </div>
+
+    <div class="info">
+        <h3>🔍 How to Check Results:</h3>
+        <ol>
+            <li>Submit one or both test forms above</li>
+            <li>Go to <a href="https://app.netlify.com" target="_blank">app.netlify.com</a></li>
+            <li>Select your Web3C_quiz site</li>
+            <li>Click "Forms" in the left sidebar</li>
+            <li>You should see "test-form" and/or "js-test-form"</li>
+            <li>If you see these, then quiz submissions should work too!</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Quiz Form Test</h3>
+        <p>Test the exact same submission method your quiz uses:</p>
+        
+        <!-- Hidden form that matches quiz structure -->
+        <form name="quiz-results" method="POST" netlify style="display: none;">
+            <input type="hidden" name="form-name" value="quiz-results" />
+            <input type="text" name="studentId" />
+            <input type="text" name="studentName" />
+            <input type="number" name="score" />
+            <input type="text" name="status" />
+            <input type="text" name="timestamp" />
+            <input type="text" name="correctAnswers" />
+            <input type="text" name="totalQuestions" />
+            <input type="text" name="timeSpent" />
+            <input type="text" name="detailedResults" />
+        </form>
+        
+        <button type="button" onclick="testQuizSubmission()">Test Quiz Submission Method</button>
+        <div id="quizTestResult"></div>
+    </div>
+
+    <script>
+        function testJavaScriptSubmission() {
+            const resultDiv = document.getElementById('jsTestResult');
+            resultDiv.innerHTML = '<p>⏳ Testing JavaScript submission...</p>';
+            
+            const formData = new FormData();
+            formData.append('form-name', 'js-test-form');
+            formData.append('jsTestData', 'This is a JavaScript test submission');
+            formData.append('timestamp', new Date().toISOString());
+            
+            fetch('/', {
+                method: 'POST',
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams(formData).toString()
+            }).then(response => {
+                if (response.ok) {
+                    resultDiv.innerHTML = '<p style="color: green;">✅ JavaScript submission successful! Check Netlify Forms dashboard.</p>';
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ Failed with status: ${response.status}</p>`;
+                }
+            }).catch(error => {
+                resultDiv.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            });
+        }
+
+        function testQuizSubmission() {
+            const resultDiv = document.getElementById('quizTestResult');
+            resultDiv.innerHTML = '<p>⏳ Testing quiz submission method...</p>';
+            
+            const formData = new FormData();
+            formData.append('form-name', 'quiz-results');
+            formData.append('studentId', 'TEST123');
+            formData.append('studentName', 'Test Student');
+            formData.append('score', '85');
+            formData.append('status', 'PASSED');
+            formData.append('timestamp', new Date().toISOString());
+            formData.append('correctAnswers', '17');
+            formData.append('totalQuestions', '20');
+            formData.append('timeSpent', '25');
+            formData.append('detailedResults', 'Q1: Correct, Q2: Correct, Q3: Incorrect...');
+            
+            console.log('Testing quiz submission with data:', Object.fromEntries(formData));
+            
+            fetch('/', {
+                method: 'POST',
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams(formData).toString()
+            }).then(response => {
+                console.log('Response status:', response.status);
+                if (response.ok) {
+                    resultDiv.innerHTML = '<p style="color: green;">✅ Quiz submission method works! Check Netlify Forms dashboard for "quiz-results".</p>';
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">❌ Failed with status: ${response.status}. Check console for details.</p>`;
+                }
+            }).catch(error => {
+                console.error('Submission error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
