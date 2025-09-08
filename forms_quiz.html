@@ -1046,20 +1046,30 @@ function validateEmail(email) {
         // Load previously attempted student IDs from localStorage
         function loadAttemptedStudentIds() {
             const stored = localStorage.getItem('attemptedStudentIds');
+            console.log('🔍 Loading attempted IDs from localStorage:', stored);
             if (stored) {
                 attemptedStudentIds = new Set(JSON.parse(stored));
+                console.log('📝 Loaded attempted student IDs:', [...attemptedStudentIds]);
+            } else {
+                console.log('📝 No attempted student IDs found in localStorage');
             }
         }
 
-        // Save attempted student ID to localStorage
+        // Save attempted student ID to localStorage  
         function saveAttemptedStudentId(studentId) {
             attemptedStudentIds.add(studentId);
-            localStorage.setItem('attemptedStudentIds', JSON.stringify([...attemptedStudentIds]));
+            const idsArray = [...attemptedStudentIds];
+            localStorage.setItem('attemptedStudentIds', JSON.stringify(idsArray));
+            console.log('💾 Saved attempted student ID:', studentId);
+            console.log('📝 All attempted IDs now:', idsArray);
         }
 
         // Check if student ID has already been used
         function checkStudentIdAttempt(studentId) {
-            return attemptedStudentIds.has(studentId);
+            const hasAttempted = attemptedStudentIds.has(studentId);
+            console.log(`🔍 Checking if "${studentId}" has attempted:`, hasAttempted);
+            console.log('📝 Current attempted IDs:', [...attemptedStudentIds]);
+            return hasAttempted;
         }
 
         // Student information setup
