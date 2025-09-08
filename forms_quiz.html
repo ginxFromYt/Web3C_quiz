@@ -1145,7 +1145,7 @@ function validateEmail(email) {
         }
 
         // Start quiz function with enhanced security
-        function startQuiz() {
+        async function startQuiz() {
             const studentId = document.getElementById('studentId').value.trim();
             const studentName = document.getElementById('studentName').value.trim();
             
@@ -1160,8 +1160,10 @@ function validateEmail(email) {
                 return;
             }
             
-            // Double-check student ID hasn't been used
-            if (checkStudentIdAttempt(studentId)) {
+            // Double-check student ID hasn't been used (ASYNC CHECK)
+            const hasAttempted = await checkStudentIdAttempt(studentId);
+            console.log(`🔒 Final security check for "${studentId}":`, hasAttempted);
+            if (hasAttempted) {
                 alert('This Student ID has already been used to take the quiz. Only one attempt is allowed per student.');
                 return;
             }
