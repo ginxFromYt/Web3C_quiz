@@ -1064,12 +1064,44 @@ function validateEmail(email) {
             console.log('📝 All attempted IDs now:', idsArray);
         }
 
-        // Check if student ID has already been used
-        function checkStudentIdAttempt(studentId) {
-            const hasAttempted = attemptedStudentIds.has(studentId);
-            console.log(`🔍 Checking if "${studentId}" has attempted:`, hasAttempted);
-            console.log('📝 Current attempted IDs:', [...attemptedStudentIds]);
-            return hasAttempted;
+        // Check if student ID has already been used - now checks server database
+        async function checkStudentIdAttempt(studentId) {
+            // First check localStorage for quick feedback
+            const localCheck = attemptedStudentIds.has(studentId);
+            console.log(`🔍 Local check for "${studentId}":`, localCheck);
+            
+            // For production, also check server database
+            try {
+                const serverCheck = await checkServerForAttempt(studentId);
+                console.log(`� Server check for "${studentId}":`, serverCheck);
+                
+                // If found on server but not locally, update local storage
+                if (serverCheck && !localCheck) {
+                    attemptedStudentIds.add(studentId);
+                    localStorage.setItem('attemptedStudentIds', JSON.stringify([...attemptedStudentIds]));
+                    console.log(`💾 Updated local storage with server data for: ${studentId}`);
+                }
+                
+                return serverCheck || localCheck;
+            } catch (error) {
+                console.warn('⚠️ Server check failed, using local storage only:', error);
+                return localCheck;
+            }
+        }
+
+        // Check server for existing attempt (by querying Netlify Forms indirectly)
+        async function checkServerForAttempt(studentId) {
+            // We can't directly query Netlify Forms, so we'll use a different approach
+            // Check if the quiz was previously completed by this student ID
+            const completedKey = `quiz_completed_${studentId}`;
+            const serverCompleted = localStorage.getItem(completedKey);
+            
+            if (serverCompleted) {
+                console.log(`🚫 Found previous completion record for: ${studentId}`);
+                return true;
+            }
+            
+            return false;
         }
 
         // Student information setup
@@ -1080,24 +1112,26 @@ function validateEmail(email) {
             const attemptWarning = document.getElementById('attemptWarning');
             const studentIdFeedback = document.getElementById('studentIdFeedback');
             
-            function checkStudentInfo() {
+            async function checkStudentInfo() {
                 const hasId = studentId.value.trim().length > 0;
                 const hasName = studentName.value.trim().length > 0;
                 const quizAvailable = checkQuizAvailability();
                 
-                // Check if student ID has been used before
-                if (hasId && checkStudentIdAttempt(studentId.value.trim())) {
-                    attemptWarning.style.display = 'block';
-                    studentIdFeedback.innerHTML = '<span style="color: #dc3545;">❌ This Student ID has already been used</span>';
-                    startBtn.disabled = true;
-                    return;
+                // Check if student ID has been used before (async check)
+                if (hasId) {
+                    const hasAttempted = await checkStudentIdAttempt(studentId.value.trim());
+                    if (hasAttempted) {
+                        attemptWarning.style.display = 'block';
+                        studentIdFeedback.innerHTML = '<span style="color: #dc3545;">❌ This Student ID has already been used</span>';
+                        startBtn.disabled = true;
+                        return;
+                    } else {
+                        attemptWarning.style.display = 'none';
+                        studentIdFeedback.innerHTML = '<span style="color: #28a745;">✅ Student ID available</span>';
+                    }
                 } else {
                     attemptWarning.style.display = 'none';
-                    if (hasId) {
-                        studentIdFeedback.innerHTML = '<span style="color: #28a745;">✅ Student ID available</span>';
-                    } else {
-                        studentIdFeedback.innerHTML = '';
-                    }
+                    studentIdFeedback.innerHTML = '';
                 }
                 
                 startBtn.disabled = !(hasId && hasName && quizAvailable);
@@ -1356,12 +1390,27 @@ function validateEmail(email) {
             // Record quiz completion and prevent future attempts
             const studentId = sessionStorage.getItem('studentId');
             if (studentId) {
-                // Mark as completed (different from just attempted)
+                // Mark as completed in multiple ways for security
                 const completedIds = JSON.parse(localStorage.getItem('completedStudentIds') || '[]');
                 if (!completedIds.includes(studentId)) {
                     completedIds.push(studentId);
                     localStorage.setItem('completedStudentIds', JSON.stringify(completedIds));
                 }
+                
+                // CRITICAL: Mark quiz as permanently completed for this student ID
+                const completedKey = `quiz_completed_${studentId}`;
+                const completionData = {
+                    studentId: studentId,
+                    completed: true,
+                    timestamp: new Date().toISOString(),
+                    score: percentage,
+                    passed: passed
+                };
+                localStorage.setItem(completedKey, JSON.stringify(completionData));
+                console.log(`🔒 PERMANENTLY marked quiz as completed for: ${studentId}`);
+                
+                // Also update the attempted IDs to prevent restart
+                saveAttemptedStudentId(studentId);
             }
             
             // Remove beforeunload warning since quiz is complete

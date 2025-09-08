@@ -411,11 +411,17 @@
             let attemptedIds = JSON.parse(localStorage.getItem('attemptedStudentIds') || '[]');
             let completedIds = JSON.parse(localStorage.getItem('completedStudentIds') || '[]');
             
+            // Remove from regular lists
             attemptedIds = attemptedIds.filter(id => id !== studentId);
             completedIds = completedIds.filter(id => id !== studentId);
             
             localStorage.setItem('attemptedStudentIds', JSON.stringify(attemptedIds));
             localStorage.setItem('completedStudentIds', JSON.stringify(completedIds));
+            
+            // CRITICAL: Also remove the permanent completion record
+            const completedKey = `quiz_completed_${studentId}`;
+            localStorage.removeItem(completedKey);
+            console.log(`🗑️ Removed permanent completion record for: ${studentId}`);
             
             loadAttemptedStudents();
             loadCurrentStats();
@@ -438,6 +444,18 @@
             
             localStorage.removeItem('attemptedStudentIds');
             localStorage.removeItem('completedStudentIds');
+            
+            // CRITICAL: Also remove all permanent completion records
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('quiz_completed_')) {
+                    keysToRemove.push(key);
+                }
+            }
+            
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            console.log(`🗑️ Removed ${keysToRemove.length} permanent completion records`);
             
             loadAttemptedStudents();
             loadCurrentStats();
