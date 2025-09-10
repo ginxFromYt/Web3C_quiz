@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form - 21+ Only</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .form-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="email"], input[type="password"], input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+        .error {
+            border-color: #f44336 !important;
+        }
+        .requirement {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Registration Form</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            <strong>Age Requirement: 21 years and above only</strong>
+        </p>
+        
+        <form id="registrationForm" onsubmit="validateForm(event)">
+            <div class="form-group">
+                <label for="firstName">First Name *</label>
+                <input type="text" id="firstName" name="firstName" required>
+                <div class="requirement">No special characters allowed</div>
+            </div>
+
+            <div class="form-group">
+                <label for="middleName">Middle Name</label>
+                <input type="text" id="middleName" name="middleName">
+                <div class="requirement">No special characters allowed</div>
+            </div>
+
+            <div class="form-group">
+                <label for="lastName">Last Name *</label>
+                <input type="text" id="lastName" name="lastName" required>
+                <div class="requirement">No special characters allowed</div>
+            </div>
+
+            <div class="form-group">
+                <label for="dob">Date of Birth *</label>
+                <input type="date" id="dob" name="dob" required>
+                <div class="requirement">Must be 21 years or older</div>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" name="password" required>
+                <div class="requirement">Minimum 8 characters required</div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Confirm Password *</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                <div class="requirement">Must match the password above</div>
+            </div>
+
+            <button type="submit" class="submit-btn">Register</button>
+        </form>
+    </div>
+
+    <script>
+        function validateForm(event) {
+            event.preventDefault(); // Prevent form submission
+            
+            // Get form values
+            const firstName = document.getElementById('firstName').value.trim();
+            const middleName = document.getElementById('middleName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const dob = document.getElementById('dob').value;
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            let isValid = true;
+            let errorMessages = [];
+            
+            // Reset all field styles
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => input.classList.remove('error'));
+            
+            // Validate First Name (no special characters)
+            const namePattern = /^[a-zA-Z\s]+$/;
+            if (!firstName) {
+                errorMessages.push('First Name is required');
+                document.getElementById('firstName').classList.add('error');
+                isValid = false;
+            } else if (!namePattern.test(firstName)) {
+                errorMessages.push('First Name cannot contain special characters or numbers');
+                document.getElementById('firstName').classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate Middle Name (optional but if provided, no special characters)
+            if (middleName && !namePattern.test(middleName)) {
+                errorMessages.push('Middle Name cannot contain special characters or numbers');
+                document.getElementById('middleName').classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate Last Name (no special characters)
+            if (!lastName) {
+                errorMessages.push('Last Name is required');
+                document.getElementById('lastName').classList.add('error');
+                isValid = false;
+            } else if (!namePattern.test(lastName)) {
+                errorMessages.push('Last Name cannot contain special characters or numbers');
+                document.getElementById('lastName').classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate Date of Birth (21+ years old)
+            if (!dob) {
+                errorMessages.push('Date of Birth is required');
+                document.getElementById('dob').classList.add('error');
+                isValid = false;
+            } else {
+                const today = new Date();
+                const birthDate = new Date(dob);
+                const age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                
+                // Adjust age if birthday hasn't occurred this year
+                const actualAge = (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) 
+                    ? age - 1 : age;
+                
+                if (actualAge < 21) {
+                    errorMessages.push('You must be 21 years or older to register');
+                    document.getElementById('dob').classList.add('error');
+                    isValid = false;
+                }
+            }
+            
+            // Validate Email
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                errorMessages.push('Email is required');
+                document.getElementById('email').classList.add('error');
+                isValid = false;
+            } else if (!emailPattern.test(email)) {
+                errorMessages.push('Please enter a valid email address');
+                document.getElementById('email').classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate Password (minimum 8 characters)
+            if (!password) {
+                errorMessages.push('Password is required');
+                document.getElementById('password').classList.add('error');
+                isValid = false;
+            } else if (password.length < 8) {
+                errorMessages.push('Password must be at least 8 characters long');
+                document.getElementById('password').classList.add('error');
+                isValid = false;
+            }
+            
+            // Validate Confirm Password
+            if (!confirmPassword) {
+                errorMessages.push('Confirm Password is required');
+                document.getElementById('confirmPassword').classList.add('error');
+                isValid = false;
+            } else if (password !== confirmPassword) {
+                errorMessages.push('Passwords do not match');
+                document.getElementById('confirmPassword').classList.add('error');
+                isValid = false;
+            }
+            
+            // Show appropriate alert
+            if (isValid) {
+                alert('Registration successful! All inputs are valid.\n\nWelcome ' + firstName + ' ' + lastName + '!');
+                // Optionally reset the form
+                document.getElementById('registrationForm').reset();
+            } else {
+                alert('Registration failed! Please fix the following errors:\n\n• ' + errorMessages.join('\n• '));
+            }
+        }
+        
+        // Add real-time validation feedback
+        document.getElementById('firstName').addEventListener('input', function() {
+            const namePattern = /^[a-zA-Z\s]+$/;
+            if (this.value && !namePattern.test(this.value)) {
+                this.classList.add('error');
+            } else {
+                this.classList.remove('error');
+            }
+        });
+        
+        document.getElementById('middleName').addEventListener('input', function() {
+            const namePattern = /^[a-zA-Z\s]+$/;
+            if (this.value && !namePattern.test(this.value)) {
+                this.classList.add('error');
+            } else {
+                this.classList.remove('error');
+            }
+        });
+        
+        document.getElementById('lastName').addEventListener('input', function() {
+            const namePattern = /^[a-zA-Z\s]+$/;
+            if (this.value && !namePattern.test(this.value)) {
+                this.classList.add('error');
+            } else {
+                this.classList.remove('error');
+            }
+        });
+        
+        document.getElementById('password').addEventListener('input', function() {
+            if (this.value.length < 8 && this.value.length > 0) {
+                this.classList.add('error');
+            } else {
+                this.classList.remove('error');
+            }
+        });
+        
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            if (this.value && this.value !== password) {
+                this.classList.add('error');
+            } else {
+                this.classList.remove('error');
+            }
+        });
+    </script>
+</body>
+</html>
