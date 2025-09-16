@@ -973,6 +973,245 @@ async function fetchData(url) {
         let isMobileDevice = false; // Track if device is mobile
         let lastInteractionTime = null; // Track user interaction for mobile
         let suspiciousInactivity = 0; // Track suspicious periods of inactivity
+        
+        // Enhanced security variables
+        let quizSessionToken = null;
+        let browserFingerprint = null;
+        let quizStartTimestamp = null;
+        let securityCheckInterval = null;
+        let tabSwitchDebounceTimer = null;
+        let lastVisibilityChange = 0;
+        let securityStorage = {
+            local: 'unit4_security_local',
+            session: 'unit4_security_session', 
+            cookie: 'unit4_security_cookie'
+        };
+
+        // Generate browser fingerprint for enhanced security
+        function generateBrowserFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillText('Browser fingerprint', 2, 2);
+            
+            const fingerprint = {
+                screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: navigator.language,
+                platform: navigator.platform,
+                userAgent: navigator.userAgent.slice(0, 100), // Truncated for storage
+                canvas: canvas.toDataURL().slice(-50), // Last 50 chars
+                timestamp: Date.now(),
+                random: Math.random().toString(36).substring(7)
+            };
+            
+            return btoa(JSON.stringify(fingerprint)).slice(0, 64);
+        }
+
+        // Generate unique session token
+        function generateSessionToken() {
+            const timestamp = Date.now();
+            const random = Math.random().toString(36).substring(2, 15);
+            const fingerprint = browserFingerprint.slice(0, 8);
+            return btoa(`${timestamp}-${random}-${fingerprint}`);
+        }
+
+        // Enhanced security storage system
+        function writeSecurityData(studentId, data) {
+            const securityData = {
+                studentId,
+                sessionToken: quizSessionToken,
+                fingerprint: browserFingerprint,
+                timestamp: Date.now(),
+                ...data
+            };
+            
+            try {
+                // Triple storage approach
+                localStorage.setItem(securityStorage.local, JSON.stringify(securityData));
+                sessionStorage.setItem(securityStorage.session, JSON.stringify(securityData));
+                
+                // Cookie storage (HttpOnly would be better but we can't set that from JS)
+                const cookieData = btoa(JSON.stringify({
+                    id: studentId,
+                    token: quizSessionToken.slice(0, 16),
+                    fp: browserFingerprint.slice(0, 16),
+                    ts: Date.now()
+                }));
+                document.cookie = `${securityStorage.cookie}=${cookieData}; path=/; SameSite=Strict; max-age=86400`;
+                
+                console.log('🔒 Security data written to all storage layers');
+                return true;
+            } catch (error) {
+                console.error('❌ Failed to write security data:', error);
+                return false;
+            }
+        }
+
+        // Read and verify security data
+        function readSecurityData(studentId) {
+            try {
+                const localStorage_data = JSON.parse(localStorage.getItem(securityStorage.local) || '{}');
+                const sessionStorage_data = JSON.parse(sessionStorage.getItem(securityStorage.session) || '{}');
+                
+                // Check cookie
+                const cookies = document.cookie.split(';');
+                let cookieData = {};
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === securityStorage.cookie) {
+                        try {
+                            cookieData = JSON.parse(atob(value));
+                        } catch (e) {
+                            console.warn('🍪 Invalid cookie data');
+                        }
+                        break;
+                    }
+                }
+                
+                // Verify consistency across storage layers
+                const consistencyCheck = (
+                    localStorage_data.studentId === studentId &&
+                    sessionStorage_data.studentId === studentId &&
+                    cookieData.id === studentId
+                );
+                
+                if (!consistencyCheck) {
+                    console.error('❌ Security data inconsistency detected');
+                    return null;
+                }
+                
+                return {
+                    local: localStorage_data,
+                    session: sessionStorage_data,
+                    cookie: cookieData,
+                    consistent: true
+                };
+            } catch (error) {
+                console.error('❌ Failed to read security data:', error);
+                return null;
+            }
+        }
+
+        // Enhanced tab switch detection with debouncing
+        function setupEnhancedTabSwitchDetection() {
+            let visibilityChangeCount = 0;
+            let rapidSwitches = 0;
+            const DEBOUNCE_TIME = 1000; // 1 second debounce
+            const RAPID_SWITCH_THRESHOLD = 3;
+            
+            function handleVisibilityChange() {
+                const now = Date.now();
+                
+                // Clear previous debounce timer
+                if (tabSwitchDebounceTimer) {
+                    clearTimeout(tabSwitchDebounceTimer);
+                }
+                
+                // Check for rapid successive switches (potential false positives)
+                if (now - lastVisibilityChange < 500) {
+                    rapidSwitches++;
+                    if (rapidSwitches > RAPID_SWITCH_THRESHOLD) {
+                        console.warn('🤖 Rapid tab switches detected - possibly false positive');
+                        return; // Ignore rapid switches
+                    }
+                } else {
+                    rapidSwitches = 0; // Reset rapid switch counter
+                }
+                
+                lastVisibilityChange = now;
+                
+                // Only process if quiz is active and document is hidden
+                if (quizActive && document.hidden) {
+                    tabSwitchDebounceTimer = setTimeout(() => {
+                        // Double-check quiz is still active and document still hidden
+                        if (quizActive && document.hidden) {
+                            handleTabSwitch();
+                        }
+                    }, DEBOUNCE_TIME);
+                } else if (quizActive && !document.hidden) {
+                    // Student returned to quiz - log but don't penalize
+                    console.log('✅ Student returned to quiz window');
+                }
+            }
+            
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Additional focus/blur detection for desktop
+            if (!isMobileDevice) {
+                window.addEventListener('blur', () => {
+                    if (quizActive) {
+                        setTimeout(() => {
+                            if (quizActive && document.hidden) {
+                                handleTabSwitch();
+                            }
+                        }, DEBOUNCE_TIME);
+                    }
+                });
+            }
+        }
+
+        // Initialize enhanced security system
+        function initializeEnhancedSecurity() {
+            browserFingerprint = generateBrowserFingerprint();
+            console.log('🔒 Browser fingerprint generated:', browserFingerprint.slice(0, 16) + '...');
+            
+            // Start security monitoring interval
+            securityCheckInterval = setInterval(() => {
+                if (quizActive) {
+                    checkSecurityIntegrity();
+                }
+            }, 30000); // Check every 30 seconds
+        }
+
+        // Check security integrity periodically
+        function checkSecurityIntegrity() {
+            if (!quizActive) return;
+            
+            const studentId = sessionStorage.getItem('studentId');
+            if (!studentId) {
+                console.error('❌ Student ID missing from session');
+                handleSecurityViolation('Missing student session data');
+                return;
+            }
+            
+            const securityData = readSecurityData(studentId);
+            if (!securityData || !securityData.consistent) {
+                console.error('❌ Security data corruption detected');
+                handleSecurityViolation('Security data tampering detected');
+                return;
+            }
+            
+            // Check session token validity
+            if (securityData.session.sessionToken !== quizSessionToken) {
+                console.error('❌ Session token mismatch');
+                handleSecurityViolation('Invalid session token');
+                return;
+            }
+            
+            console.log('✅ Security integrity check passed');
+        }
+
+        // Handle security violations
+        function handleSecurityViolation(reason) {
+            warningCount++;
+            
+            const violation = {
+                type: 'SECURITY_VIOLATION',
+                reason: reason,
+                timestamp: new Date().toISOString(),
+                sessionToken: quizSessionToken,
+                fingerprint: browserFingerprint
+            };
+            
+            securityViolations.push(violation);
+            
+            alert(`🚨 SECURITY VIOLATION DETECTED\n\n${reason}\n\nYour quiz will be submitted automatically to prevent cheating.\n\nContact your instructor if you believe this is an error.`);
+            
+            // Force submit quiz
+            submitQuiz();
+        }
 
         // Initialize quiz
         document.addEventListener('DOMContentLoaded', function() {
@@ -982,11 +1221,14 @@ async function fetchData(url) {
                 return; // Stop initialization
             }
             
+            // Initialize enhanced security system first
+            initializeEnhancedSecurity();
+            
             setupStudentInfo();
             checkQuizAvailability();
             loadAttemptedStudentIds();
             detectMobileDevice();
-            setupTabSwitchDetection();
+            setupEnhancedTabSwitchDetection(); // Use enhanced version
             setupMobileControls();
             setupFullscreenMode();
             // Timer will start when quiz begins
@@ -1477,18 +1719,40 @@ async function fetchData(url) {
             }
         }
 
-        // Handle tab switching detection
+        // Enhanced handle tab switching detection with debouncing
         function handleTabSwitch() {
+            // Additional verification before counting as violation
+            if (!quizActive) {
+                console.log('⚠️ Tab switch detected but quiz not active - ignoring');
+                return;
+            }
+            
+            // Check if this is likely a false positive (rapid successive events)
+            const now = Date.now();
+            if (now - lastVisibilityChange < 1500) { // Less than 1.5 seconds since last change
+                console.log('⚠️ Rapid tab switch detected - likely false positive, ignoring');
+                return;
+            }
+            
             tabSwitchCount++;
             warningCount++;
             
             const timestamp = new Date().toLocaleTimeString();
-            console.warn(`🚨 Tab switch detected #${tabSwitchCount} at ${timestamp}`);
+            console.warn(`🚨 Valid tab switch detected #${tabSwitchCount} at ${timestamp}`);
+            
+            // Enhanced security logging
+            writeSecurityData(sessionStorage.getItem('studentId'), {
+                action: 'TAB_SWITCH_VIOLATION',
+                violationNumber: tabSwitchCount,
+                timestamp: new Date().toISOString(),
+                fingerprint: browserFingerprint,
+                sessionToken: quizSessionToken
+            });
             
             // Show immediate warning
             showTabSwitchWarning();
             
-            // Record the violation
+            // Record the violation in legacy format for compatibility
             recordSecurityViolation('Tab Switch', `Student switched tabs or applications (#${tabSwitchCount})`);
             
             // Take action based on number of violations
@@ -1496,8 +1760,8 @@ async function fetchData(url) {
                 // Auto-submit quiz after 3 tab switches
                 handleTooManyViolations();
             } else if (tabSwitchCount >= 2) {
-                // Final warning
-                alert(`⚠️ FINAL WARNING!\n\nThis is your ${tabSwitchCount} violation for switching tabs/applications.\n\nOne more violation will result in automatic quiz submission!\n\nStay focused on the quiz window.`);
+                // Final warning with enhanced details
+                alert(`🚨 FINAL WARNING!\n\nThis is your ${tabSwitchCount} violation for switching tabs/applications.\n\nSession: ${quizSessionToken.slice(0, 8)}...\nDetected: ${timestamp}\n\nOne more violation will result in automatic quiz submission!\n\nStay focused on the quiz window.`);
             }
         }
 
@@ -1669,48 +1933,175 @@ async function fetchData(url) {
             }
         }
 
-        // Save attempted student ID to localStorage  
+        // Enhanced save attempted student ID with triple security storage
         function saveAttemptedStudentId(studentId) {
             attemptedStudentIds.add(studentId);
             const idsArray = [...attemptedStudentIds];
-            localStorage.setItem('attemptedStudentIds_unit4', JSON.stringify(idsArray));
-            console.log('💾 Saved attempted student ID:', studentId);
+            
+            // Generate unique attempt token
+            const attemptToken = generateSessionToken();
+            
+            const attemptData = {
+                studentIds: idsArray,
+                fingerprint: browserFingerprint,
+                timestamp: Date.now(),
+                attemptToken: attemptToken
+            };
+            
+            // Save to multiple storage layers
+            localStorage.setItem('attemptedStudentIds_unit4', JSON.stringify(attemptData));
+            sessionStorage.setItem('attemptedStudentIds_unit4_session', JSON.stringify(attemptData));
+            
+            // Encode student ID and save to additional location
+            const encodedId = btoa(studentId + '-' + Date.now());
+            localStorage.setItem(`unit4_student_${encodedId}`, JSON.stringify({
+                id: studentId,
+                fingerprint: browserFingerprint,
+                timestamp: Date.now()
+            }));
+            
+            console.log('🔒 Enhanced security save for student ID:', studentId);
             console.log('📝 All attempted IDs now:', idsArray);
         }
 
-        // Check if student ID has already been used
+        // Enhanced check with multi-layer security verification
         async function checkStudentIdAttempt(studentId) {
-            // First check localStorage for quick feedback
-            const localCheck = attemptedStudentIds.has(studentId);
-            console.log(`🔍 Local check for "${studentId}":`, localCheck);
+            // Check all storage layers for consistency
+            const localStorage_check = checkLocalStorageAttempt(studentId);
+            const sessionStorage_check = checkSessionStorageAttempt(studentId);
+            const fingerprint_check = checkFingerprintAttempt(studentId);
+            const encoded_check = checkEncodedAttempts(studentId);
             
-            // For production, also check server database
+            console.log(`🔍 Multi-layer check for "${studentId}":`, {
+                localStorage: localStorage_check,
+                sessionStorage: sessionStorage_check,
+                fingerprint: fingerprint_check,
+                encoded: encoded_check
+            });
+            
+            // If any layer indicates previous attempt, verify consistency
+            if (localStorage_check || sessionStorage_check || fingerprint_check || encoded_check) {
+                console.log(`🚫 Previous attempt detected for: ${studentId}`);
+                return true;
+            }
+            
+            // Additional server-side check for completed quizzes
             try {
                 const serverCheck = await checkServerForAttempt(studentId);
                 console.log(`🔍 Server check for "${studentId}":`, serverCheck);
                 
-                // If found on server but not locally, update local storage
-                if (serverCheck && !localCheck) {
-                    console.log('📝 Updating local storage with server data');
+                if (serverCheck) {
+                    // Update all storage layers with server data
                     saveAttemptedStudentId(studentId);
                 }
                 
-                return serverCheck || localCheck;
+                return serverCheck;
             } catch (error) {
                 console.warn('⚠️ Server check failed, using local storage only:', error);
-                return localCheck;
+                return false;
             }
         }
 
-        // Check server for existing attempt
+        // Check localStorage for attempt
+        function checkLocalStorageAttempt(studentId) {
+            try {
+                const stored = localStorage.getItem('attemptedStudentIds_unit4');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    if (Array.isArray(data.studentIds)) {
+                        return data.studentIds.includes(studentId);
+                    } else if (Array.isArray(data)) {
+                        // Legacy format support
+                        return data.includes(studentId);
+                    }
+                }
+                return attemptedStudentIds.has(studentId);
+            } catch (error) {
+                console.warn('⚠️ Error checking localStorage:', error);
+                return attemptedStudentIds.has(studentId);
+            }
+        }
+
+        // Check sessionStorage for attempt  
+        function checkSessionStorageAttempt(studentId) {
+            try {
+                const stored = sessionStorage.getItem('attemptedStudentIds_unit4_session');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    return data.studentIds && data.studentIds.includes(studentId);
+                }
+                return false;
+            } catch (error) {
+                console.warn('⚠️ Error checking sessionStorage:', error);
+                return false;
+            }
+        }
+
+        // Check fingerprint-based attempts
+        function checkFingerprintAttempt(studentId) {
+            try {
+                // Check if this browser fingerprint has been used with this student ID
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('unit4_student_')) {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        if (data.id === studentId && data.fingerprint === browserFingerprint) {
+                            console.log('🔍 Fingerprint match found for student:', studentId);
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.warn('⚠️ Error checking fingerprint attempts:', error);
+                return false;
+            }
+        }
+
+        // Check encoded attempt records
+        function checkEncodedAttempts(studentId) {
+            try {
+                // Scan all localStorage keys for encoded student records
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('unit4_student_')) {
+                        try {
+                            const encodedPart = key.replace('unit4_student_', '');
+                            const decoded = atob(encodedPart);
+                            if (decoded.startsWith(studentId + '-')) {
+                                console.log('🔍 Encoded record found for student:', studentId);
+                                return true;
+                            }
+                        } catch (decodeError) {
+                            // Skip invalid encoded keys
+                            continue;
+                        }
+                    }
+                }
+                return false;
+            } catch (error) {
+                console.warn('⚠️ Error checking encoded attempts:', error);
+                return false;
+            }
+        }
+
+        // Enhanced server check for existing attempt
         async function checkServerForAttempt(studentId) {
             // Check if the quiz was previously completed by this student ID
             const completedKey = `unit4_quiz_completed_${studentId}`;
             const serverCompleted = localStorage.getItem(completedKey);
             
             if (serverCompleted) {
-                console.log(`🚫 Found previous completion record for: ${studentId}`);
-                return true;
+                try {
+                    const completionData = JSON.parse(serverCompleted);
+                    // Verify completion data integrity
+                    if (completionData.studentId === studentId && completionData.completed === true) {
+                        console.log(`🚫 Verified completion record for: ${studentId}`);
+                        return true;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Invalid completion data format');
+                }
             }
             
             return false;
@@ -1771,22 +2162,31 @@ async function fetchData(url) {
                 alert('Quiz is no longer available. Please check the deadline.');
                 return;
             }
-            
-            // Double-check student ID hasn't been used (ASYNC CHECK)
+
+            // Enhanced security check with multiple verification layers
+            console.log('🔒 Running enhanced security verification...');
             const hasAttempted = await checkStudentIdAttempt(studentId);
             console.log(`🔒 Final security check for "${studentId}":`, hasAttempted);
             if (hasAttempted) {
-                alert('This Student ID has already been used to take the quiz. Only one attempt is allowed per student.');
+                alert('🚫 QUIZ ACCESS DENIED\n\nThis Student ID has already been used to take the quiz.\n\nOnly one attempt is allowed per student.\n\nIf you believe this is an error, contact your instructor.');
                 return;
             }
+            
+            // Generate unique session token
+            quizSessionToken = generateSessionToken();
+            quizStartTimestamp = Date.now();
+            
+            console.log('🔒 Generated session token:', quizSessionToken.slice(0, 16) + '...');
             
             // Confirm student wants to start (one chance only)
             const confirmStart = confirm(
                 `⚠️ IMPORTANT: ONE ATTEMPT ONLY\n\n` +
                 `Student ID: ${studentId}\n` +
                 `Name: ${studentName}\n` +
-                `Quiz: Unit 4 - AJAX and JSON\n\n` +
+                `Quiz: Unit 4 - AJAX and JSON\n` +
+                `Security Token: ${quizSessionToken.slice(0, 8)}...\n\n` +
                 `You have only ONE attempt at this quiz. Once you start, your Student ID will be recorded and cannot be used again.\n\n` +
+                `SECURITY NOTICE: This quiz uses advanced anti-cheating measures including browser fingerprinting and session tracking.\n\n` +
                 `Are you sure you want to start the quiz now?`
             );
             
@@ -1794,14 +2194,36 @@ async function fetchData(url) {
                 return;
             }
             
-            // Record this student ID as attempted
+            // Write enhanced security data to all storage layers
+            const securityWriteSuccess = writeSecurityData(studentId, {
+                studentName: studentName,
+                action: 'QUIZ_STARTED',
+                quizStartTime: new Date().toISOString()
+            });
+            
+            if (!securityWriteSuccess) {
+                alert('❌ SECURITY ERROR\n\nFailed to initialize quiz security system.\n\nPlease refresh the page and try again.\n\nIf the problem persists, contact your instructor.');
+                return;
+            }
+            
+            // Record this student ID as attempted with enhanced security
             saveAttemptedStudentId(studentId);
             
-            // Store student information
+            // Store student information in multiple locations
             sessionStorage.setItem('studentId', studentId);
             sessionStorage.setItem('studentName', studentName);
             sessionStorage.setItem('quizStarted', 'true');
             sessionStorage.setItem('quizStartTime', new Date().toISOString());
+            sessionStorage.setItem('quizSessionToken', quizSessionToken);
+            sessionStorage.setItem('browserFingerprint', browserFingerprint);
+            
+            // Also store in localStorage as backup
+            localStorage.setItem('activeQuizSession', JSON.stringify({
+                studentId: studentId,
+                sessionToken: quizSessionToken,
+                fingerprint: browserFingerprint,
+                startTime: Date.now()
+            }));
             
             // Disable back button and page refresh
             window.history.pushState(null, null, window.location.href);
@@ -1828,9 +2250,16 @@ async function fetchData(url) {
             suspiciousInactivity = 0;
             lastInteractionTime = Date.now();
             
-            // Clear any previous security logs
+            // Clear any previous security logs and reset counters
             sessionStorage.removeItem('securityLog');
             sessionStorage.removeItem('securityViolations');
+            securityViolations = []; // Reset array
+            
+            // Log quiz start in security system
+            writeSecurityData(studentId, {
+                action: 'QUIZ_ACTIVATED',
+                timestamp: new Date().toISOString()
+            });
             
             // Show security notice
             showSecurityNotice();
@@ -1843,7 +2272,7 @@ async function fetchData(url) {
             // Scroll to quiz content
             document.getElementById('quizContent').scrollIntoView({ behavior: 'smooth' });
             
-            console.log(`🚀 Unit 4 Quiz started for Student ID: ${studentId} at ${new Date().toISOString()}`);
+            console.log(`🚀 Unit 4 Quiz started for Student ID: ${studentId} with enhanced security at ${new Date().toISOString()}`);
         }
 
         // Show security notice when quiz starts
@@ -2046,10 +2475,60 @@ async function fetchData(url) {
             }
         }
 
-        // Submit quiz
+        // Submit quiz with enhanced security verification
         function submitQuiz() {
+            console.log('🚀 Starting quiz submission with security verification...');
+            
+            // Enhanced security verification before submission
+            const studentId = sessionStorage.getItem('studentId');
+            const storedSessionToken = sessionStorage.getItem('quizSessionToken');
+            const storedFingerprint = sessionStorage.getItem('browserFingerprint');
+            
+            // Verify session integrity
+            if (!studentId || !storedSessionToken || !storedFingerprint) {
+                console.error('❌ Critical session data missing during submission');
+                alert('🚨 SECURITY ERROR\n\nCritical session data is missing. Your quiz may have been tampered with.\n\nPlease contact your instructor immediately.');
+                return;
+            }
+            
+            // Verify session token matches
+            if (storedSessionToken !== quizSessionToken) {
+                console.error('❌ Session token mismatch during submission');
+                handleSecurityViolation('Session token mismatch during submission');
+                return;
+            }
+            
+            // Verify browser fingerprint matches
+            if (storedFingerprint !== browserFingerprint) {
+                console.error('❌ Browser fingerprint mismatch during submission');
+                handleSecurityViolation('Browser fingerprint mismatch during submission');
+                return;
+            }
+            
+            // Verify security data consistency across storage layers
+            const securityData = readSecurityData(studentId);
+            if (!securityData || !securityData.consistent) {
+                console.error('❌ Security data inconsistency during submission');
+                handleSecurityViolation('Security data tampering detected during submission');
+                return;
+            }
+            
+            // Log final security verification
+            writeSecurityData(studentId, {
+                action: 'QUIZ_SUBMISSION_STARTED',
+                securityVerification: 'PASSED',
+                timestamp: new Date().toISOString()
+            });
+            
+            console.log('✅ Security verification passed - proceeding with submission');
+            
             // Deactivate security monitoring
             quizActive = false;
+            
+            // Clear security monitoring interval
+            if (securityCheckInterval) {
+                clearInterval(securityCheckInterval);
+            }
             
             if (timerInterval) {
                 clearInterval(timerInterval);
@@ -2122,8 +2601,20 @@ async function fetchData(url) {
             });
             
             // Record quiz completion and prevent future attempts
-            const studentId = sessionStorage.getItem('studentId');
             if (studentId) {
+                // Enhanced completion recording with multiple security layers
+                const completionData = {
+                    studentId: studentId,
+                    timestamp: new Date().toISOString(),
+                    score: percentage,
+                    passed: passed,
+                    attempts: 1,
+                    sessionToken: quizSessionToken,
+                    fingerprint: browserFingerprint,
+                    completed: true,
+                    securityVerified: true
+                };
+                
                 // Mark as completed in multiple ways for security
                 const completedIds = JSON.parse(localStorage.getItem('completedStudentIds_unit4') || '[]');
                 if (!completedIds.includes(studentId)) {
@@ -2133,14 +2624,25 @@ async function fetchData(url) {
                 
                 // CRITICAL: Mark quiz as permanently completed for this student ID
                 const completedKey = `unit4_quiz_completed_${studentId}`;
-                const completionData = {
-                    timestamp: new Date().toISOString(),
-                    score: percentage,
-                    passed: passed,
-                    attempts: 1
-                };
                 localStorage.setItem(completedKey, JSON.stringify(completionData));
-                console.log(`🔒 PERMANENTLY marked Unit 4 quiz as completed for: ${studentId}`);
+                
+                // Additional security layer - store completion with fingerprint
+                const fingerprintKey = `unit4_completion_${browserFingerprint.slice(0, 16)}`;
+                localStorage.setItem(fingerprintKey, JSON.stringify({
+                    studentId: studentId,
+                    completedAt: Date.now(),
+                    verified: true
+                }));
+                
+                // Write final security data
+                writeSecurityData(studentId, {
+                    action: 'QUIZ_COMPLETED',
+                    finalScore: percentage,
+                    passed: passed,
+                    timestamp: new Date().toISOString()
+                });
+                
+                console.log(`🔒 PERMANENTLY marked Unit 4 quiz as completed for: ${studentId} with enhanced security`);
                 
                 // Also update the attempted IDs to prevent restart
                 saveAttemptedStudentId(studentId);
@@ -2361,41 +2863,83 @@ async function fetchData(url) {
             return answer;
         }
 
-        // Reset quiz
+        // Reset quiz (enhanced with anti-circumvention)
         function resetQuiz() {
-            if (confirm('Are you sure you want to reset the quiz? All progress will be lost.')) {
+            // SECURITY: Check if student has already completed the quiz before allowing reset
+            const studentId = sessionStorage.getItem('studentId');
+            if (studentId) {
+                const completedKey = `unit4_quiz_completed_${studentId}`;
+                const completionData = localStorage.getItem(completedKey);
+                
+                if (completionData) {
+                    alert('🚫 RESET DENIED\n\nThis student ID has already completed the quiz.\n\nStudent ID: ' + studentId + '\n\nOnly one attempt is allowed per student.\n\nContact your instructor if you need to review your results.');
+                    return;
+                }
+            }
+            
+            if (confirm('⚠️ Are you sure you want to reset the quiz?\n\nAll progress will be lost and security monitoring will restart.\n\nNote: If you have already started the quiz, this counts as your one attempt.')) {
                 // Deactivate security monitoring
                 quizActive = false;
                 tabSwitchCount = 0;
                 warningCount = 0;
+                securityViolations = [];
+                
+                // Clear security intervals
+                if (securityCheckInterval) {
+                    clearInterval(securityCheckInterval);
+                }
                 
                 // Clear all form data
                 document.getElementById('quizForm').reset();
                 
-                // Clear progress and security data
+                // Clear progress and security data (but preserve attempted student IDs)
                 localStorage.removeItem('unit4QuizProgress');
                 sessionStorage.removeItem('securityLog');
                 sessionStorage.removeItem('securityViolations');
+                sessionStorage.removeItem('quizStarted');
+                sessionStorage.removeItem('quizStartTime');
                 
                 // Reset progress bar
                 document.getElementById('progressFill').style.width = '0%';
                 
-                // Hide results
+                // Hide results and show student info
                 document.getElementById('results').classList.remove('show');
+                document.getElementById('quizContent').style.display = 'none';
+                document.querySelector('.quiz-info').style.display = 'block';
                 
                 // Reset timer display
                 document.getElementById('timer').textContent = 'Time: 00:00';
                 document.getElementById('timer').style.backgroundColor = '#2c3e50';
                 
+                // Reset student info form
+                document.getElementById('studentId').value = '';
+                document.getElementById('studentName').value = '';
+                document.getElementById('startQuizBtn').disabled = true;
+                
                 // Update fullscreen button
                 updateFullscreenButton();
                 
-                alert('Quiz has been reset. Security monitoring will restart when you begin again.');
+                // Clear session tokens
+                quizSessionToken = null;
+                
+                console.log('🔄 Quiz reset completed with security preservation');
+                alert('Quiz has been reset. Security monitoring will restart when you begin again.\n\nRemember: Only one attempt is allowed per student ID.');
             }
         }
 
-        // Retake quiz
+        // Retake quiz - enhanced security check
         function retakeQuiz() {
+            const studentId = sessionStorage.getItem('studentId');
+            if (studentId) {
+                const completedKey = `unit4_quiz_completed_${studentId}`;
+                const completionData = localStorage.getItem(completedKey);
+                
+                if (completionData) {
+                    alert('🚫 RETAKE DENIED\n\nYou have already completed the Unit 4 quiz.\n\nStudent ID: ' + studentId + '\n\nOnly one attempt is allowed per student.\n\nYour previous score has been recorded.\n\nContact your instructor if you need assistance.');
+                    return;
+                }
+            }
+            
             resetQuiz();
         }
 
