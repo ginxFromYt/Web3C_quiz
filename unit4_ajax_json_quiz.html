@@ -1,0 +1,2429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit 4 Quiz: AJAX and JSON</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .quiz-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .quiz-header {
+            text-align: center;
+            border-bottom: 3px solid #e74c3c;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .quiz-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .quiz-info {
+            background-color: #fef9e7;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+        
+        .question {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .question-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .question-number {
+            background-color: #e74c3c;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+        
+        .question-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #2c3e50;
+            flex: 1;
+        }
+        
+        .question-type {
+            background-color: #27ae60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .question-type.code { background-color: #e74c3c; }
+        .question-type.theory { background-color: #9b59b6; }
+        .question-type.practical { background-color: #f39c12; }
+        .question-type.async { background-color: #3498db; }
+        
+        .options {
+            margin-top: 15px;
+        }
+        
+        .option {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .option:hover {
+            background-color: #e9ecef;
+        }
+        
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            margin-right: 10px;
+            margin-top: 2px;
+        }
+        
+        .option label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .code-snippet {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        .text-answer {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .quiz-controls {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #dee2e6;
+        }
+        
+        .btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-success {
+            background-color: #27ae60;
+        }
+        
+        .btn-success:hover {
+            background-color: #1e8449;
+        }
+        
+        .btn-warning {
+            background-color: #f39c12;
+        }
+        
+        .btn-warning:hover {
+            background-color: #d68910;
+        }
+        
+        .results {
+            display: none;
+            background-color: #f8f9fa;
+            border: 2px solid #27ae60;
+            border-radius: 8px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .score-display {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .score-excellent { color: #27ae60; }
+        .score-good { color: #f39c12; }
+        .score-needs-improvement { color: #e74c3c; }
+        
+        .answer-review {
+            margin-top: 20px;
+        }
+        
+        .answer-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #dee2e6;
+        }
+        
+        .answer-correct {
+            background-color: #d4edda;
+            border-left-color: #27ae60;
+        }
+        
+        .answer-incorrect {
+            background-color: #f8d7da;
+            border-left-color: #e74c3c;
+        }
+        
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #dee2e6;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #e74c3c;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .ajax-icon {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer" id="timer">Time: 00:00</div>
+    
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1><span class="ajax-icon">⚡</span> Unit 4 Quiz: AJAX and JSON <span class="ajax-icon">📡</span></h1>
+            <p>Test your knowledge of asynchronous JavaScript, AJAX requests, and JSON data handling</p>
+        </div>
+        
+        <div class="quiz-info">
+            <h3>📋 Quiz Instructions:</h3>
+            <ul>
+                <li><strong>Questions:</strong> 20 questions covering all Unit 4 topics</li>
+                <li><strong>Types:</strong> Multiple choice, code analysis, and practical application</li>
+                <li><strong>Time Limit:</strong> 35 minutes (recommended)</li>
+                <li><strong>Passing Score:</strong> 70% (14/20 correct answers)</li>
+                <li><strong>Topics:</strong> AJAX, JSON, XMLHttpRequest, Fetch API, async/await, error handling</li>
+                <li><strong>Tips:</strong> Read each question carefully and consider real-world API scenarios</li>
+            </ul>
+        </div>
+
+        <div class="quiz-info" style="background-color: #fff3cd; border-left-color: #ffc107;">
+            <h3>👤 Student Information</h3>
+            
+            <!-- Time and attempt restrictions notice -->
+            <div id="timeRestrictionNotice" style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; 
+                                                    padding: 15px; margin: 15px 0; border-radius: 5px; display: none;">
+                <h4>⏰ Quiz Access Restricted</h4>
+                <p id="restrictionMessage"></p>
+            </div>
+            
+            <!-- Student ID check notice -->
+            <div id="attemptWarning" style="background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404; 
+                                              padding: 15px; margin: 15px 0; border-radius: 5px; display: none;">
+                <h4>⚠️ Multiple Attempt Warning</h4>
+                <p>This Student ID has already been used to submit the quiz. Only one attempt is allowed per student.</p>
+                <p><strong>If this is a mistake, please contact your instructor immediately.</strong></p>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                <div>
+                    <label for="studentId" style="display: block; margin-bottom: 5px; font-weight: bold;">Student ID:</label>
+                    <input type="text" id="studentId" placeholder="Enter your Student ID" 
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <div id="studentIdFeedback" style="font-size: 12px; margin-top: 3px;"></div>
+                </div>
+                <div>
+                    <label for="studentName" style="display: block; margin-bottom: 5px; font-weight: bold;">Full Name:</label>
+                    <input type="text" id="studentName" placeholder="Enter your full name" 
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+            
+            <!-- Quiz availability status -->
+            <div id="quizStatus" style="margin-top: 15px;">
+                <div id="timeRemaining" style="font-size: 14px; color: #666; margin-bottom: 10px;"></div>
+                <button type="button" id="startQuizBtn" class="btn btn-success" onclick="startQuiz()" disabled>
+                    🚀 Start Unit 4 AJAX/JSON Quiz
+                </button>
+                <small style="display: block; margin-top: 5px; color: #666;">
+                    Make sure you have a stable internet connection for this quiz.
+                </small>
+            </div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div id="quizContent" style="display: none;">
+        
+        <form id="quizForm">
+            <!-- Question 1 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">1</div>
+                    <div class="question-text">What does AJAX stand for?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q1a" name="q1" value="a">
+                        <label for="q1a">Asynchronous JavaScript and XML</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q1b" name="q1" value="b">
+                        <label for="q1b">Automatic JavaScript and XML</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q1c" name="q1" value="c">
+                        <label for="q1c">Advanced JavaScript and XML</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q1d" name="q1" value="d">
+                        <label for="q1d">Asynchronous Java and XML</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 2 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">2</div>
+                    <div class="question-text">Which method is used to create a new XMLHttpRequest object?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q2a" name="q2" value="a">
+                        <label for="q2a">new XMLHttpRequest()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q2b" name="q2" value="b">
+                        <label for="q2b">XMLHttpRequest.create()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q2c" name="q2" value="c">
+                        <label for="q2c">createXMLHttpRequest()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q2d" name="q2" value="d">
+                        <label for="q2d">XMLHttpRequest.new()</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">3</div>
+                    <div class="question-text">What is the primary advantage of using asynchronous requests?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q3a" name="q3" value="a">
+                        <label for="q3a">They prevent the browser from freezing while waiting for server response</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q3b" name="q3" value="b">
+                        <label for="q3b">They are faster than synchronous requests</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q3c" name="q3" value="c">
+                        <label for="q3c">They use less bandwidth</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q3d" name="q3" value="d">
+                        <label for="q3d">They are more secure</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 4 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">4</div>
+                    <div class="question-text">What does JSON stand for?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q4a" name="q4" value="a">
+                        <label for="q4a">JavaScript Object Notation</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4b" name="q4" value="b">
+                        <label for="q4b">JavaScript Object Network</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4c" name="q4" value="c">
+                        <label for="q4c">Java Standard Object Notation</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q4d" name="q4" value="d">
+                        <label for="q4d">JavaScript Organized Notation</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 5 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">5</div>
+                    <div class="question-text">Which XMLHttpRequest property contains the server response?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q5a" name="q5" value="a">
+                        <label for="q5a">responseText</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5b" name="q5" value="b">
+                        <label for="q5b">response</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5c" name="q5" value="c">
+                        <label for="q5c">data</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q5d" name="q5" value="d">
+                        <label for="q5d">result</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 6 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">6</div>
+                    <div class="question-text">What readyState value indicates that the request is complete and the response is ready?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q6a" name="q6" value="a">
+                        <label for="q6a">4</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q6b" name="q6" value="b">
+                        <label for="q6b">3</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q6c" name="q6" value="c">
+                        <label for="q6c">2</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q6d" name="q6" value="d">
+                        <label for="q6d">1</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 7 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">7</div>
+                    <div class="question-text">Which modern JavaScript method is the recommended alternative to XMLHttpRequest?</div>
+                    <div class="question-type practical">Practical</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q7a" name="q7" value="a">
+                        <label for="q7a">fetch()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q7b" name="q7" value="b">
+                        <label for="q7b">ajax()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q7c" name="q7" value="c">
+                        <label for="q7c">request()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q7d" name="q7" value="d">
+                        <label for="q7d">http()</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 8 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">8</div>
+                    <div class="question-text">What method is used to convert a JavaScript object to a JSON string?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q8a" name="q8" value="a">
+                        <label for="q8a">JSON.stringify()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q8b" name="q8" value="b">
+                        <label for="q8b">JSON.parse()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q8c" name="q8" value="c">
+                        <label for="q8c">JSON.toString()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q8d" name="q8" value="d">
+                        <label for="q8d">JSON.convert()</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 9 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">9</div>
+                    <div class="question-text">What method is used to convert a JSON string to a JavaScript object?</div>
+                    <div class="question-type code">Code</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q9a" name="q9" value="a">
+                        <label for="q9a">JSON.parse()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q9b" name="q9" value="b">
+                        <label for="q9b">JSON.stringify()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q9c" name="q9" value="c">
+                        <label for="q9c">JSON.toObject()</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q9d" name="q9" value="d">
+                        <label for="q9d">JSON.decode()</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 10 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">10</div>
+                    <div class="question-text">Which HTTP status code indicates a successful request?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q10a" name="q10" value="a">
+                        <label for="q10a">200</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q10b" name="q10" value="b">
+                        <label for="q10b">404</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q10c" name="q10" value="c">
+                        <label for="q10c">500</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q10d" name="q10" value="d">
+                        <label for="q10d">301</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 11 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">11</div>
+                    <div class="question-text">Analyze this XMLHttpRequest code. What will happen when it runs?</div>
+                    <div class="question-type code">Code Analysis</div>
+                </div>
+                <div class="code-snippet">
+const xhr = new XMLHttpRequest();
+xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/1', true);
+xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+        console.log(xhr.responseText);
+    }
+};
+xhr.send();
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q11a" name="q11" value="a">
+                        <label for="q11a">It will fetch a post from JSONPlaceholder and log the response</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q11b" name="q11" value="b">
+                        <label for="q11b">It will cause an error because of CORS</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q11c" name="q11" value="c">
+                        <label for="q11c">It will send data to the server</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q11d" name="q11" value="d">
+                        <label for="q11d">It will do nothing because it's missing parameters</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 12 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">12</div>
+                    <div class="question-text">What is the main advantage of the fetch() API over XMLHttpRequest?</div>
+                    <div class="question-type practical">Practical</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q12a" name="q12" value="a">
+                        <label for="q12a">It returns Promises, making it easier to handle asynchronous operations</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q12b" name="q12" value="b">
+                        <label for="q12b">It is faster than XMLHttpRequest</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q12c" name="q12" value="c">
+                        <label for="q12c">It uses less memory</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q12d" name="q12" value="d">
+                        <label for="q12d">It works in older browsers</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 13 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">13</div>
+                    <div class="question-text">Which of the following are valid JSON data types? (Select all that apply)</div>
+                    <div class="question-type theory">Multiple</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="q13a" name="q13" value="a">
+                        <label for="q13a">String</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q13b" name="q13" value="b">
+                        <label for="q13b">Number</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q13c" name="q13" value="c">
+                        <label for="q13c">Boolean</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q13d" name="q13" value="d">
+                        <label for="q13d">Function</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q13e" name="q13" value="e">
+                        <label for="q13e">Array</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q13f" name="q13" value="f">
+                        <label for="q13f">Object</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 14 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">14</div>
+                    <div class="question-text">What keyword is used with fetch() to wait for the response?</div>
+                    <div class="question-type async">Async</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q14a" name="q14" value="a">
+                        <label for="q14a">await</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q14b" name="q14" value="b">
+                        <label for="q14b">wait</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q14c" name="q14" value="c">
+                        <label for="q14c">pause</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q14d" name="q14" value="d">
+                        <label for="q14d">delay</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 15 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">15</div>
+                    <div class="question-text">Which HTTP methods are commonly used in AJAX requests? (Select all that apply)</div>
+                    <div class="question-type practical">Multiple</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="q15a" name="q15" value="a">
+                        <label for="q15a">GET</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q15b" name="q15" value="b">
+                        <label for="q15b">POST</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q15c" name="q15" value="c">
+                        <label for="q15c">PUT</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q15d" name="q15" value="d">
+                        <label for="q15d">DELETE</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 16 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">16</div>
+                    <div class="question-text">What is CORS and why is it important in AJAX requests?</div>
+                    <div class="question-type theory">Theory</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q16a" name="q16" value="a">
+                        <label for="q16a">Cross-Origin Resource Sharing - a security feature that restricts web pages from making requests to different domains</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q16b" name="q16" value="b">
+                        <label for="q16b">A JavaScript library for making AJAX requests</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q16c" name="q16" value="c">
+                        <label for="q16c">A method for compressing HTTP responses</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q16d" name="q16" value="d">
+                        <label for="q16d">A type of database for storing JSON data</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 17 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">17</div>
+                    <div class="question-text">Analyze this fetch() code. What is wrong with it?</div>
+                    <div class="question-type code">Code Analysis</div>
+                </div>
+                <div class="code-snippet">
+fetch('https://api.example.com/data')
+.then(response => {
+    console.log(response.json());
+})
+.catch(error => {
+    console.log('Error:', error);
+});
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q17a" name="q17" value="a">
+                        <label for="q17a">response.json() returns a Promise that needs to be handled with .then() or await</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q17b" name="q17" value="b">
+                        <label for="q17b">The URL is incorrect</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q17c" name="q17" value="c">
+                        <label for="q17c">Missing the HTTP method specification</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q17d" name="q17" value="d">
+                        <label for="q17d">Nothing is wrong with this code</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 18 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">18</div>
+                    <div class="question-text">Write a JavaScript function using async/await that fetches data from an API and returns the JSON response. Include error handling.</div>
+                    <div class="question-type code">Code Writing</div>
+                </div>
+                <textarea class="text-answer" name="q18" placeholder="Write your async function here...
+Example:
+async function fetchData(url) {
+  // Your code here
+}"></textarea>
+            </div>
+
+            <!-- Question 19 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">19</div>
+                    <div class="question-text">What is the purpose of the Content-Type header in AJAX requests?</div>
+                    <div class="question-type practical">Practical</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="radio" id="q19a" name="q19" value="a">
+                        <label for="q19a">To specify the format of the data being sent to the server</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q19b" name="q19" value="b">
+                        <label for="q19b">To specify the expected response format</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q19c" name="q19" value="c">
+                        <label for="q19c">To authenticate the user</label>
+                    </div>
+                    <div class="option">
+                        <input type="radio" id="q19d" name="q19" value="d">
+                        <label for="q19d">To compress the request data</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 20 -->
+            <div class="question">
+                <div class="question-header">
+                    <div class="question-number">20</div>
+                    <div class="question-text">Which of the following are best practices for AJAX development? (Select all that apply)</div>
+                    <div class="question-type practical">Multiple</div>
+                </div>
+                <div class="options">
+                    <div class="option">
+                        <input type="checkbox" id="q20a" name="q20" value="a">
+                        <label for="q20a">Always handle errors and network failures</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q20b" name="q20" value="b">
+                        <label for="q20b">Provide loading indicators for user feedback</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q20c" name="q20" value="c">
+                        <label for="q20c">Use synchronous requests for better performance</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q20d" name="q20" value="d">
+                        <label for="q20d">Validate and sanitize data from API responses</label>
+                    </div>
+                    <div class="option">
+                        <input type="checkbox" id="q20e" name="q20" value="e">
+                        <label for="q20e">Implement proper timeout handling</label>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Hidden Netlify form for collecting results -->
+        <form name="unit4-ajax-quiz-results" method="POST" netlify netlify-honeypot="bot-field" style="display: none;">
+            <input type="hidden" name="form-name" value="unit4-ajax-quiz-results" />
+            <input type="hidden" name="bot-field" />
+            <input type="text" name="studentId" />
+            <input type="text" name="studentName" />
+            <input type="number" name="score" />
+            <input type="text" name="status" />
+            <input type="text" name="timestamp" />
+            <input type="text" name="correctAnswers" />
+            <input type="text" name="totalQuestions" />
+            <input type="text" name="timeSpent" />
+            <input type="text" name="detailedResults" />
+            <input type="text" name="quizUnit" />
+            <input type="text" name="securitySummary" />
+            <input type="text" name="securityLog" />
+            <input type="text" name="deviceInfo" />
+            <input type="text" name="isMobileDevice" />
+        </form>
+
+        <div class="quiz-controls">
+            <button type="button" class="btn btn-warning" onclick="saveProgress()">💾 Save Progress</button>
+            <button type="button" class="btn btn-success" onclick="submitQuiz()">🎯 Submit Quiz</button>
+            <button type="button" class="btn" onclick="resetQuiz()">🔄 Reset Quiz</button>
+        </div>
+        
+        </div> <!-- End quizContent -->
+
+        <div id="results" class="results">
+            <div class="score-display" id="scoreDisplay"></div>
+            <div id="feedback"></div>
+            <div class="answer-review" id="answerReview"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button type="button" class="btn" onclick="retakeQuiz()">📝 Retake Quiz</button>
+                <button type="button" class="btn btn-success" onclick="downloadResults()">📄 Download Results</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz data and configuration
+        const quizData = {
+            questions: 20,
+            timeLimit: 35 * 60, // 35 minutes in seconds
+            passingScore: 14, // 70%
+            deadlineTime: "23:59", // 11:59 PM deadline
+            deadlineDate: "2025-12-31", // Set this to your quiz date (YYYY-MM-DD)
+            answers: {
+                q1: 'a',  // Asynchronous JavaScript and XML
+                q2: 'a',  // new XMLHttpRequest()
+                q3: 'a',  // They prevent the browser from freezing
+                q4: 'a',  // JavaScript Object Notation
+                q5: 'a',  // responseText
+                q6: 'a',  // 4
+                q7: 'a',  // fetch()
+                q8: 'a',  // JSON.stringify()
+                q9: 'a',  // JSON.parse()
+                q10: 'a', // 200
+                q11: 'a', // It will fetch a post and log the response
+                q12: 'a', // Returns Promises
+                q13: ['a', 'b', 'c', 'e', 'f'], // String, Number, Boolean, Array, Object (not Function)
+                q14: 'a', // await
+                q15: ['a', 'b', 'c', 'd'], // GET, POST, PUT, DELETE
+                q16: 'a', // Cross-Origin Resource Sharing security feature
+                q17: 'a', // response.json() returns a Promise
+                q18: 'code', // JavaScript function (manual grading)
+                q19: 'a', // To specify the format of data being sent
+                q20: ['a', 'b', 'd', 'e'] // Handle errors, loading indicators, validate data, timeout handling (not synchronous)
+            }
+        };
+
+        let quizStartTime = null;
+        let timerInterval = null;
+        let attemptedStudentIds = new Set(); // Track attempted student IDs
+        let tabSwitchCount = 0; // Track tab switching attempts
+        let quizActive = false; // Track if quiz is currently active
+        let warningCount = 0; // Track number of warnings given
+        let isMobileDevice = false; // Track if device is mobile
+        let lastInteractionTime = null; // Track user interaction for mobile
+        let suspiciousInactivity = 0; // Track suspicious periods of inactivity
+
+        // Initialize quiz
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if on GitHub Pages and redirect to Netlify for full functionality
+            if (window.location.hostname.includes('github.io')) {
+                showRedirectNotice();
+                return; // Stop initialization
+            }
+            
+            setupStudentInfo();
+            checkQuizAvailability();
+            loadAttemptedStudentIds();
+            detectMobileDevice();
+            setupTabSwitchDetection();
+            setupMobileControls();
+            setupFullscreenMode();
+            // Timer will start when quiz begins
+        });
+
+        // Show redirect notice for GitHub Pages users
+        function showRedirectNotice() {
+            const redirectNotice = document.createElement('div');
+            redirectNotice.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                           background-color: rgba(0,0,0,0.8); z-index: 10000; 
+                           display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; text-align: center;">
+                        <h2 style="color: #e74c3c; margin-bottom: 20px;">⚠️ Database Features Required</h2>
+                        <p style="margin-bottom: 20px;">This quiz requires Netlify Forms for automatic result collection and student tracking.</p>
+                        <p style="margin-bottom: 20px;"><strong>For full functionality, this quiz should be deployed to Netlify.</strong></p>
+                        <p style="margin-bottom: 20px;">Auto-redirect in <span id="countdown">5</span> seconds...</p>
+                        <button onclick="window.open('https://fastidious-tartufo-752929.netlify.app/', '_blank')" 
+                                style="background: #e74c3c; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px;">
+                            🚀 Open Netlify Version
+                        </button>
+                        <button onclick="continueWithoutDatabase()" 
+                                style="background: #95a5a6; color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px;">
+                            Continue Anyway
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(redirectNotice);
+            
+            // Countdown timer
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdownElement) countdownElement.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    window.open('https://fastidious-tartufo-752929.netlify.app/', '_blank');
+                }
+            }, 1000);
+        }
+
+        function continueWithoutDatabase() {
+            // Remove redirect notice and continue with GitHub Pages version
+            const notice = document.querySelector('[style*="position: fixed"]');
+            if (notice && notice.parentElement) {
+                notice.parentElement.removeChild(notice);
+            }
+            
+            // Initialize quiz normally
+            setupStudentInfo();
+            checkQuizAvailability();
+            loadAttemptedStudentIds();
+            detectMobileDevice();
+            setupTabSwitchDetection();
+            setupMobileControls();
+            setupFullscreenMode();
+        }
+
+        // Detect if user is on mobile device
+        function detectMobileDevice() {
+            isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                            (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
+                            window.screen.width <= 768;
+            
+            console.log('📱 Device detection:', {
+                isMobile: isMobileDevice,
+                userAgent: navigator.userAgent,
+                touchPoints: navigator.maxTouchPoints,
+                screenWidth: window.screen.width
+            });
+
+            // Add mobile-specific styling
+            if (isMobileDevice) {
+                document.body.classList.add('mobile-device');
+                addMobileStyles();
+            }
+        }
+
+        // Add mobile-specific CSS styles
+        function addMobileStyles() {
+            const mobileStyles = document.createElement('style');
+            mobileStyles.innerHTML = `
+                .mobile-device .quiz-container {
+                    padding: 15px;
+                    margin: 10px;
+                }
+                
+                .mobile-device .question {
+                    padding: 15px;
+                    margin-bottom: 20px;
+                }
+                
+                .mobile-device .option label {
+                    font-size: 16px;
+                    line-height: 1.4;
+                    padding: 8px 0;
+                }
+                
+                .mobile-device .timer {
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    padding: 8px 12px;
+                    font-size: 14px;
+                }
+                
+                .mobile-device .btn {
+                    padding: 15px 20px;
+                    font-size: 16px;
+                    margin: 8px 4px;
+                    min-height: 44px; /* iOS minimum touch target */
+                }
+                
+                .mobile-warning {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #dc3545;
+                    color: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    z-index: 25000;
+                    max-width: 90vw;
+                    text-align: center;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                }
+            `;
+            document.head.appendChild(mobileStyles);
+        }
+
+        // Setup mobile-specific controls and monitoring
+        function setupMobileControls() {
+            if (!isMobileDevice) return;
+
+            // Enhanced mobile detection methods
+            setupMobileVisibilityDetection();
+            setupMobileInteractionTracking();
+            setupMobileOrientationDetection();
+            setupMobileAppSwitchDetection();
+            
+            console.log('📱 Mobile controls initialized');
+        }
+
+        // Mobile visibility detection (more sensitive than desktop)
+        function setupMobileVisibilityDetection() {
+            // Page visibility (works on most mobile browsers)
+            document.addEventListener('visibilitychange', function() {
+                if (quizActive && document.hidden) {
+                    handleMobileTabSwitch('Page became hidden (app switch or tab change)');
+                }
+            });
+
+            // Focus/blur events (iOS Safari and some Android browsers)
+            window.addEventListener('blur', function() {
+                if (quizActive && isMobileDevice) {
+                    setTimeout(() => {
+                        if (document.hidden || !document.hasFocus()) {
+                            handleMobileTabSwitch('Mobile app lost focus');
+                        }
+                    }, 100);
+                }
+            });
+
+            // Pagehide event (iOS Safari background)
+            window.addEventListener('pagehide', function(e) {
+                if (quizActive && isMobileDevice) {
+                    handleMobileTabSwitch('Mobile app sent to background');
+                }
+            });
+
+            // Pageshow event (returning from background)
+            window.addEventListener('pageshow', function(e) {
+                if (quizActive && isMobileDevice && e.persisted) {
+                    handleMobileTabSwitch('Returned from background (possible app switch)');
+                }
+            });
+        }
+
+        // Track user interaction patterns on mobile
+        function setupMobileInteractionTracking() {
+            if (!isMobileDevice) return;
+
+            const updateLastInteraction = () => {
+                lastInteractionTime = Date.now();
+            };
+
+            // Touch events
+            document.addEventListener('touchstart', updateLastInteraction, { passive: true });
+            document.addEventListener('touchmove', updateLastInteraction, { passive: true });
+            document.addEventListener('touchend', updateLastInteraction, { passive: true });
+            
+            // Mouse events (for tablets that support both)
+            document.addEventListener('click', updateLastInteraction);
+            document.addEventListener('scroll', updateLastInteraction, { passive: true });
+
+            // Monitor for suspicious inactivity periods
+            setInterval(() => {
+                if (quizActive && lastInteractionTime) {
+                    const timeSinceLastInteraction = Date.now() - lastInteractionTime;
+                    // If no interaction for more than 30 seconds during quiz
+                    if (timeSinceLastInteraction > 30000) {
+                        suspiciousInactivity++;
+                        if (suspiciousInactivity >= 3) {
+                            handleSuspiciousActivity('Extended periods of inactivity detected (possible app switching)');
+                            suspiciousInactivity = 0; // Reset counter
+                        }
+                    }
+                }
+            }, 10000); // Check every 10 seconds
+        }
+
+        // Mobile orientation change detection
+        function setupMobileOrientationDetection() {
+            if (!isMobileDevice) return;
+
+            window.addEventListener('orientationchange', function() {
+                if (quizActive) {
+                    // Small delay to let orientation change complete
+                    setTimeout(() => {
+                        showMobileOrientationWarning();
+                    }, 500);
+                }
+            });
+
+            // Screen size change detection (Android browsers)
+            let lastScreenHeight = window.innerHeight;
+            window.addEventListener('resize', function() {
+                if (quizActive && isMobileDevice) {
+                    const currentHeight = window.innerHeight;
+                    const heightDiff = Math.abs(currentHeight - lastScreenHeight);
+                    
+                    // Significant height change might indicate keyboard or app switch
+                    if (heightDiff > 100) {
+                        // Could be virtual keyboard, but let's log it
+                        recordSecurityViolation('Mobile Screen Change', 
+                            `Screen height changed from ${lastScreenHeight} to ${currentHeight}`);
+                    }
+                    lastScreenHeight = currentHeight;
+                }
+            });
+        }
+
+        // Mobile app switch detection using various methods
+        function setupMobileAppSwitchDetection() {
+            if (!isMobileDevice) return;
+
+            // Track timing gaps that might indicate app switching
+            let lastActiveTime = Date.now();
+            
+            const checkForTimeGap = () => {
+                if (quizActive) {
+                    const currentTime = Date.now();
+                    const timeDiff = currentTime - lastActiveTime;
+                    
+                    // If there's a gap of more than 2 seconds, might be app switch
+                    if (timeDiff > 2000) {
+                        handleMobileTabSwitch(`Time gap detected: ${Math.round(timeDiff/1000)}s (possible app switch)`);
+                    }
+                    lastActiveTime = currentTime;
+                }
+            };
+
+            // Check for time gaps using animation frame
+            const timeGapChecker = () => {
+                checkForTimeGap();
+                if (quizActive) {
+                    requestAnimationFrame(timeGapChecker);
+                }
+            };
+
+            // Start checking when quiz becomes active
+            if (quizActive) {
+                requestAnimationFrame(timeGapChecker);
+            }
+
+            // iOS-specific: detect when app becomes active/inactive
+            document.addEventListener('webkitvisibilitychange', function() {
+                if (quizActive && document.webkitHidden) {
+                    handleMobileTabSwitch('iOS app became inactive');
+                }
+            });
+        }
+
+        // Handle mobile-specific tab switching
+        function handleMobileTabSwitch(reason) {
+            tabSwitchCount++;
+            warningCount++;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            console.warn(`📱 Mobile violation detected #${tabSwitchCount}: ${reason} at ${timestamp}`);
+            
+            // Show mobile-specific warning
+            showMobileTabSwitchWarning(reason);
+            
+            // Record the violation
+            recordSecurityViolation('Mobile App Switch', `${reason} (#${tabSwitchCount})`);
+            
+            // Take action based on number of violations
+            if (tabSwitchCount >= 2) { // Stricter for mobile
+                handleTooManyViolations();
+            }
+        }
+
+        // Show mobile-optimized warning
+        function showMobileTabSwitchWarning(reason) {
+            const warningDiv = document.createElement('div');
+            warningDiv.id = 'mobileTabSwitchWarning';
+            warningDiv.innerHTML = `
+                <div class="mobile-warning">
+                    <h3 style="margin: 0 0 15px 0; color: white;">🚨 MOBILE SECURITY ALERT</h3>
+                    <p style="margin: 0 0 10px 0; font-size: 16px;">
+                        <strong>App Switch Detected!</strong>
+                    </p>
+                    <p style="margin: 0 0 10px 0; font-size: 14px;">
+                        ${reason}
+                    </p>
+                    <p style="margin: 0 0 15px 0; font-size: 14px; color: #ffcccb;">
+                        Violation #${tabSwitchCount} of 2 allowed
+                    </p>
+                    <p style="margin: 0 0 20px 0; font-weight: bold; color: white;">
+                        ${tabSwitchCount >= 2 ? 'QUIZ WILL BE SUBMITTED!' : 'FINAL WARNING - Stay in this app!'}
+                    </p>
+                    <button onclick="closeMobileSecurityWarning()" 
+                            style="background: white; color: #dc3545; padding: 12px 24px; border: none; border-radius: 8px; 
+                                   font-size: 16px; font-weight: bold; cursor: pointer; min-height: 44px;">
+                        ${tabSwitchCount >= 2 ? 'SUBMIT QUIZ NOW' : 'I UNDERSTAND'}
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(warningDiv);
+            
+            // Auto-close after 8 seconds if not manually closed
+            setTimeout(() => {
+                closeMobileSecurityWarning();
+            }, 8000);
+        }
+
+        // Show mobile orientation warning
+        function showMobileOrientationWarning() {
+            const orientationWarning = document.createElement('div');
+            orientationWarning.id = 'mobileOrientationWarning';
+            orientationWarning.innerHTML = `
+                <div style="position: fixed; top: 20px; left: 20px; right: 20px; 
+                           background-color: #f39c12; color: white; padding: 15px; border-radius: 8px; 
+                           z-index: 15000; text-align: center;">
+                    <h4 style="margin: 0 0 10px 0;">📱 Screen Rotation Detected</h4>
+                    <p style="margin: 0; font-size: 14px;">Please maintain consistent screen orientation during the quiz.</p>
+                </div>
+            `;
+            document.body.appendChild(orientationWarning);
+            
+            // Record orientation change
+            recordSecurityViolation('Mobile Orientation', 'Screen orientation changed during quiz');
+            
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                const warning = document.getElementById('mobileOrientationWarning');
+                if (warning) warning.remove();
+            }, 4000);
+        }
+
+        // Close mobile security warning
+        function closeMobileSecurityWarning() {
+            const warning = document.getElementById('mobileTabSwitchWarning');
+            if (warning) {
+                warning.remove();
+            }
+            
+            // If too many violations, submit quiz
+            if (tabSwitchCount >= 2) { // Stricter threshold for mobile
+                handleTooManyViolations();
+            }
+        }
+
+        // Setup tab switching and window focus detection
+        function setupTabSwitchDetection() {
+            // Detect when user switches tabs or applications
+            document.addEventListener('visibilitychange', function() {
+                if (quizActive && document.hidden) {
+                    handleTabSwitch();
+                }
+            });
+
+            // Detect when window loses focus (Alt+Tab, clicking other apps)
+            window.addEventListener('blur', function() {
+                if (quizActive) {
+                    handleTabSwitch();
+                }
+            });
+
+            // Detect key combinations that might be used to cheat
+            document.addEventListener('keydown', function(e) {
+                if (quizActive) {
+                    // Prevent common cheating key combinations
+                    if (
+                        // Alt + Tab (switch windows)
+                        (e.altKey && e.key === 'Tab') ||
+                        // Ctrl + Tab (switch browser tabs)
+                        (e.ctrlKey && e.key === 'Tab') ||
+                        // F12 (Developer tools)
+                        e.key === 'F12' ||
+                        // Ctrl + Shift + I (Developer tools)
+                        (e.ctrlKey && e.shiftKey && e.key === 'I') ||
+                        // Ctrl + U (View source)
+                        (e.ctrlKey && e.key === 'u') ||
+                        // Ctrl + Shift + J (Console)
+                        (e.ctrlKey && e.shiftKey && e.key === 'J') ||
+                        // Ctrl + Shift + C (Inspect element)
+                        (e.ctrlKey && e.shiftKey && e.key === 'C') ||
+                        // Right click context menu
+                        e.key === 'ContextMenu'
+                    ) {
+                        e.preventDefault();
+                        handleSuspiciousActivity('Attempted to use prohibited key combination: ' + 
+                            (e.altKey ? 'Alt+' : '') + 
+                            (e.ctrlKey ? 'Ctrl+' : '') + 
+                            (e.shiftKey ? 'Shift+' : '') + 
+                            e.key);
+                        return false;
+                    }
+                }
+            });
+
+            // Disable right-click context menu during quiz
+            document.addEventListener('contextmenu', function(e) {
+                if (quizActive) {
+                    e.preventDefault();
+                    handleSuspiciousActivity('Attempted to access right-click context menu');
+                    return false;
+                }
+            });
+
+            // Disable text selection during quiz to prevent copying
+            document.addEventListener('selectstart', function(e) {
+                if (quizActive && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        }
+
+        // Setup fullscreen mode for quiz
+        function setupFullscreenMode() {
+            // Add fullscreen button to quiz controls
+            const quizControls = document.querySelector('.quiz-controls');
+            if (quizControls) {
+                const fullscreenBtn = document.createElement('button');
+                fullscreenBtn.type = 'button';
+                fullscreenBtn.className = 'btn';
+                fullscreenBtn.innerHTML = '🔍 Enter Fullscreen';
+                fullscreenBtn.onclick = toggleFullscreen;
+                fullscreenBtn.id = 'fullscreenBtn';
+                quizControls.insertBefore(fullscreenBtn, quizControls.firstChild);
+            }
+
+            // Detect fullscreen exit
+            document.addEventListener('fullscreenchange', function() {
+                if (quizActive && !document.fullscreenElement) {
+                    handleSuspiciousActivity('Exited fullscreen mode during quiz');
+                }
+                updateFullscreenButton();
+            });
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.warn('Could not enter fullscreen:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function updateFullscreenButton() {
+            const btn = document.getElementById('fullscreenBtn');
+            if (btn) {
+                if (document.fullscreenElement) {
+                    btn.innerHTML = '🔍 Exit Fullscreen';
+                    btn.style.backgroundColor = '#f39c12';
+                } else {
+                    btn.innerHTML = '🔍 Enter Fullscreen';
+                    btn.style.backgroundColor = '#e74c3c';
+                }
+            }
+        }
+
+        // Handle tab switching detection
+        function handleTabSwitch() {
+            tabSwitchCount++;
+            warningCount++;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            console.warn(`🚨 Tab switch detected #${tabSwitchCount} at ${timestamp}`);
+            
+            // Show immediate warning
+            showTabSwitchWarning();
+            
+            // Record the violation
+            recordSecurityViolation('Tab Switch', `Student switched tabs or applications (#${tabSwitchCount})`);
+            
+            // Take action based on number of violations
+            if (tabSwitchCount >= 3) {
+                // Auto-submit quiz after 3 tab switches
+                handleTooManyViolations();
+            } else if (tabSwitchCount >= 2) {
+                // Final warning
+                alert(`⚠️ FINAL WARNING!\n\nThis is your ${tabSwitchCount} violation for switching tabs/applications.\n\nOne more violation will result in automatic quiz submission!\n\nStay focused on the quiz window.`);
+            }
+        }
+
+        // Handle other suspicious activities
+        function handleSuspiciousActivity(activity) {
+            warningCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            console.warn(`🚨 Suspicious activity: ${activity} at ${timestamp}`);
+            
+            // Record the violation
+            recordSecurityViolation('Suspicious Activity', activity);
+            
+            // Show warning
+            showSecurityWarning(activity);
+            
+            if (warningCount >= 5) {
+                handleTooManyViolations();
+            }
+        }
+
+        // Show tab switch warning
+        function showTabSwitchWarning() {
+            // Create warning overlay
+            const warningDiv = document.createElement('div');
+            warningDiv.id = 'tabSwitchWarning';
+            warningDiv.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                           background-color: rgba(220, 53, 69, 0.95); z-index: 20000; 
+                           display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; text-align: center;
+                               border: 3px solid #dc3545; box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);">
+                        <h2 style="color: #dc3545; margin-bottom: 20px;">🚨 SECURITY VIOLATION DETECTED</h2>
+                        <p style="margin-bottom: 20px; font-size: 16px;">
+                            <strong>You switched tabs or applications during the quiz!</strong>
+                        </p>
+                        <p style="margin-bottom: 20px; color: #666;">
+                            Violation #${tabSwitchCount} of 3 allowed<br>
+                            Time: ${new Date().toLocaleTimeString()}
+                        </p>
+                        <p style="margin-bottom: 20px; font-weight: bold; color: #dc3545;">
+                            ${tabSwitchCount >= 3 ? 'TOO MANY VIOLATIONS - QUIZ WILL BE SUBMITTED!' : 
+                              tabSwitchCount === 2 ? 'FINAL WARNING - One more violation will submit your quiz!' : 
+                              'Stay focused on the quiz window only!'}
+                        </p>
+                        <button onclick="closeSecurityWarning()" 
+                                style="background: #dc3545; color: white; padding: 12px 24px; border: none; border-radius: 5px; 
+                                       font-size: 16px; cursor: pointer;">
+                            ${tabSwitchCount >= 3 ? 'SUBMIT QUIZ NOW' : 'I UNDERSTAND - CONTINUE QUIZ'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(warningDiv);
+            
+            // Auto-close after 5 seconds if not manually closed
+            setTimeout(() => {
+                closeSecurityWarning();
+            }, 5000);
+        }
+
+        // Show security warning for other violations
+        function showSecurityWarning(activity) {
+            const warningDiv = document.createElement('div');
+            warningDiv.id = 'securityWarning';
+            warningDiv.innerHTML = `
+                <div style="position: fixed; top: 20px; right: 20px; 
+                           background-color: #dc3545; color: white; padding: 15px; border-radius: 8px; 
+                           z-index: 15000; max-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    <h4 style="margin: 0 0 10px 0;">⚠️ Security Warning</h4>
+                    <p style="margin: 0; font-size: 14px;">${activity}</p>
+                    <small style="color: #ffcccb;">Warning #${warningCount}</small>
+                </div>
+            `;
+            document.body.appendChild(warningDiv);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                const warning = document.getElementById('securityWarning');
+                if (warning) warning.remove();
+            }, 3000);
+        }
+
+        // Close security warning
+        function closeSecurityWarning() {
+            const warning = document.getElementById('tabSwitchWarning');
+            if (warning) {
+                warning.remove();
+            }
+            
+            // If too many violations, submit quiz
+            if (tabSwitchCount >= 3) {
+                handleTooManyViolations();
+            }
+        }
+
+        // Handle too many security violations
+        function handleTooManyViolations() {
+            alert(`🚨 QUIZ TERMINATED DUE TO SECURITY VIOLATIONS\n\nTotal Violations: ${tabSwitchCount} tab switches, ${warningCount} total warnings\n\nYour quiz will be submitted automatically with current answers.\n\nContact your instructor if you believe this is an error.`);
+            
+            // Add violation note to the quiz submission
+            const violationNote = `SECURITY VIOLATIONS DETECTED: ${tabSwitchCount} tab switches, ${warningCount} total security warnings. Quiz auto-submitted.`;
+            sessionStorage.setItem('securityViolations', violationNote);
+            
+            // Force submit the quiz
+            submitQuiz();
+        }
+
+        // Record security violations for the report
+        function recordSecurityViolation(type, description) {
+            const violations = JSON.parse(sessionStorage.getItem('securityLog') || '[]');
+            violations.push({
+                type: type,
+                description: description,
+                timestamp: new Date().toISOString(),
+                quizTime: quizStartTime ? Math.floor((new Date() - quizStartTime) / 1000) : 0
+            });
+            sessionStorage.setItem('securityLog', JSON.stringify(violations));
+        }
+
+        // Check if quiz is available based on time restrictions
+        function checkQuizAvailability() {
+            const now = new Date();
+            const deadlineDateTime = new Date(`${quizData.deadlineDate}T${quizData.deadlineTime}:00`);
+            
+            const timeRemainingElement = document.getElementById('timeRemaining');
+            const restrictionNotice = document.getElementById('timeRestrictionNotice');
+            const restrictionMessage = document.getElementById('restrictionMessage');
+            const startBtn = document.getElementById('startQuizBtn');
+            
+            if (now > deadlineDateTime) {
+                // Quiz deadline has passed
+                restrictionNotice.style.display = 'block';
+                restrictionMessage.innerHTML = `
+                    <strong>Quiz Deadline Passed</strong><br>
+                    The deadline for this quiz was ${deadlineDateTime.toLocaleString()}.<br>
+                    Please contact your instructor if you believe this is an error.
+                `;
+                startBtn.style.display = 'none';
+                timeRemainingElement.style.display = 'none';
+                return false;
+            } else {
+                // Quiz is still available - show countdown
+                const timeRemaining = deadlineDateTime - now;
+                const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                
+                timeRemainingElement.innerHTML = `
+                    ⏰ <strong>Quiz Available Until:</strong> ${deadlineDateTime.toLocaleString()}<br>
+                    Time remaining: ${days} days, ${hours} hours, and ${minutes} minutes
+                `;
+                timeRemainingElement.style.color = days < 1 ? '#dc3545' : '#28a745';
+                
+                // Update countdown every minute
+                setTimeout(checkQuizAvailability, 60000);
+                return true;
+            }
+        }
+
+        // Load previously attempted student IDs from localStorage
+        function loadAttemptedStudentIds() {
+            const stored = localStorage.getItem('attemptedStudentIds_unit4');
+            console.log('🔍 Loading attempted IDs from localStorage:', stored);
+            if (stored) {
+                attemptedStudentIds = new Set(JSON.parse(stored));
+                console.log('📝 Loaded attempted student IDs:', [...attemptedStudentIds]);
+            } else {
+                console.log('📝 No attempted student IDs found in localStorage');
+            }
+        }
+
+        // Save attempted student ID to localStorage  
+        function saveAttemptedStudentId(studentId) {
+            attemptedStudentIds.add(studentId);
+            const idsArray = [...attemptedStudentIds];
+            localStorage.setItem('attemptedStudentIds_unit4', JSON.stringify(idsArray));
+            console.log('💾 Saved attempted student ID:', studentId);
+            console.log('📝 All attempted IDs now:', idsArray);
+        }
+
+        // Check if student ID has already been used
+        async function checkStudentIdAttempt(studentId) {
+            // First check localStorage for quick feedback
+            const localCheck = attemptedStudentIds.has(studentId);
+            console.log(`🔍 Local check for "${studentId}":`, localCheck);
+            
+            // For production, also check server database
+            try {
+                const serverCheck = await checkServerForAttempt(studentId);
+                console.log(`🔍 Server check for "${studentId}":`, serverCheck);
+                
+                // If found on server but not locally, update local storage
+                if (serverCheck && !localCheck) {
+                    console.log('📝 Updating local storage with server data');
+                    saveAttemptedStudentId(studentId);
+                }
+                
+                return serverCheck || localCheck;
+            } catch (error) {
+                console.warn('⚠️ Server check failed, using local storage only:', error);
+                return localCheck;
+            }
+        }
+
+        // Check server for existing attempt
+        async function checkServerForAttempt(studentId) {
+            // Check if the quiz was previously completed by this student ID
+            const completedKey = `unit4_quiz_completed_${studentId}`;
+            const serverCompleted = localStorage.getItem(completedKey);
+            
+            if (serverCompleted) {
+                console.log(`🚫 Found previous completion record for: ${studentId}`);
+                return true;
+            }
+            
+            return false;
+        }
+
+        // Student information setup
+        function setupStudentInfo() {
+            const studentId = document.getElementById('studentId');
+            const studentName = document.getElementById('studentName');
+            const startBtn = document.getElementById('startQuizBtn');
+            const attemptWarning = document.getElementById('attemptWarning');
+            const studentIdFeedback = document.getElementById('studentIdFeedback');
+            
+            async function checkStudentInfo() {
+                const hasId = studentId.value.trim().length > 0;
+                const hasName = studentName.value.trim().length > 0;
+                const quizAvailable = checkQuizAvailability();
+                
+                // Check if student ID has been used before (async check)
+                if (hasId) {
+                    const hasAttempted = await checkStudentIdAttempt(studentId.value.trim());
+                    if (hasAttempted) {
+                        attemptWarning.style.display = 'block';
+                        studentIdFeedback.innerHTML = '<span style="color: #dc3545;">⚠️ This Student ID has already been used</span>';
+                        startBtn.disabled = true;
+                        return;
+                    } else {
+                        attemptWarning.style.display = 'none';
+                        studentIdFeedback.innerHTML = '<span style="color: #28a745;">✅ Student ID available</span>';
+                    }
+                } else {
+                    attemptWarning.style.display = 'none';
+                    studentIdFeedback.innerHTML = '';
+                }
+                
+                startBtn.disabled = !(hasId && hasName && quizAvailable);
+            }
+            
+            studentId.addEventListener('input', checkStudentInfo);
+            studentName.addEventListener('input', checkStudentInfo);
+            
+            // Check initially
+            checkStudentInfo();
+        }
+
+        // Start quiz function with enhanced security
+        async function startQuiz() {
+            const studentId = document.getElementById('studentId').value.trim();
+            const studentName = document.getElementById('studentName').value.trim();
+            
+            if (!studentId || !studentName) {
+                alert('Please enter both Student ID and Full Name to begin the quiz.');
+                return;
+            }
+            
+            // Double-check quiz availability
+            if (!checkQuizAvailability()) {
+                alert('Quiz is no longer available. Please check the deadline.');
+                return;
+            }
+            
+            // Double-check student ID hasn't been used (ASYNC CHECK)
+            const hasAttempted = await checkStudentIdAttempt(studentId);
+            console.log(`🔒 Final security check for "${studentId}":`, hasAttempted);
+            if (hasAttempted) {
+                alert('This Student ID has already been used to take the quiz. Only one attempt is allowed per student.');
+                return;
+            }
+            
+            // Confirm student wants to start (one chance only)
+            const confirmStart = confirm(
+                `⚠️ IMPORTANT: ONE ATTEMPT ONLY\n\n` +
+                `Student ID: ${studentId}\n` +
+                `Name: ${studentName}\n` +
+                `Quiz: Unit 4 - AJAX and JSON\n\n` +
+                `You have only ONE attempt at this quiz. Once you start, your Student ID will be recorded and cannot be used again.\n\n` +
+                `Are you sure you want to start the quiz now?`
+            );
+            
+            if (!confirmStart) {
+                return;
+            }
+            
+            // Record this student ID as attempted
+            saveAttemptedStudentId(studentId);
+            
+            // Store student information
+            sessionStorage.setItem('studentId', studentId);
+            sessionStorage.setItem('studentName', studentName);
+            sessionStorage.setItem('quizStarted', 'true');
+            sessionStorage.setItem('quizStartTime', new Date().toISOString());
+            
+            // Disable back button and page refresh
+            window.history.pushState(null, null, window.location.href);
+            window.onpopstate = function() {
+                window.history.pushState(null, null, window.location.href);
+                alert('⚠️ Navigation is disabled during the quiz. Please complete your quiz.');
+            };
+            
+            // Warn before page unload
+            window.addEventListener('beforeunload', function(e) {
+                e.preventDefault();
+                e.returnValue = 'Are you sure you want to leave? Your quiz progress may be lost.';
+                return e.returnValue;
+            });
+            
+            // Hide student info section and show quiz
+            document.querySelector('.quiz-info').style.display = 'none';
+            document.getElementById('quizContent').style.display = 'block';
+            
+            // Activate security monitoring
+            quizActive = true;
+            tabSwitchCount = 0;
+            warningCount = 0;
+            suspiciousInactivity = 0;
+            lastInteractionTime = Date.now();
+            
+            // Clear any previous security logs
+            sessionStorage.removeItem('securityLog');
+            sessionStorage.removeItem('securityViolations');
+            
+            // Show security notice
+            showSecurityNotice();
+            
+            // Start timer and initialize
+            startTimer();
+            loadSavedProgress();
+            updateProgress();
+            
+            // Scroll to quiz content
+            document.getElementById('quizContent').scrollIntoView({ behavior: 'smooth' });
+            
+            console.log(`🚀 Unit 4 Quiz started for Student ID: ${studentId} at ${new Date().toISOString()}`);
+        }
+
+        // Show security notice when quiz starts
+        function showSecurityNotice() {
+            const isMobile = isMobileDevice;
+            const notice = document.createElement('div');
+            notice.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                           background-color: rgba(0,0,0,0.8); z-index: 10000; 
+                           display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+                    <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; text-align: center;
+                               border: 3px solid #e74c3c; max-height: 90vh; overflow-y: auto;">
+                        <h2 style="color: #e74c3c; margin-bottom: 20px;">
+                            🔒 QUIZ SECURITY NOTICE ${isMobile ? '📱' : '💻'}
+                        </h2>
+                        <div style="text-align: left; margin-bottom: 20px;">
+                            <h4>⚠️ During this quiz, the following are PROHIBITED:</h4>
+                            <ul style="color: #666; line-height: 1.6;">
+                                ${isMobile ? `
+                                <li><strong>Switching to other apps</strong> (home button, app switcher)</li>
+                                <li><strong>Opening notifications</strong> or pulling down notification panel</li>
+                                <li><strong>Using split-screen mode</strong> or picture-in-picture</li>
+                                <li><strong>Taking screenshots</strong> or screen recordings</li>
+                                <li><strong>Using voice assistants</strong> (Siri, Google Assistant)</li>
+                                <li><strong>Answering calls or messages</strong> during the quiz</li>
+                                <li><strong>Changing screen orientation</strong> unnecessarily</li>
+                                ` : `
+                                <li>Switching to other browser tabs or applications (Alt+Tab)</li>
+                                <li>Opening developer tools (F12, Ctrl+Shift+I)</li>
+                                <li>Viewing page source (Ctrl+U)</li>
+                                <li>Using right-click context menu</li>
+                                <li>Copying text from questions</li>
+                                <li>Exiting fullscreen mode (if enabled)</li>
+                                `}
+                            </ul>
+                            <h4>🚨 Violation Consequences:</h4>
+                            <ul style="color: #dc3545; line-height: 1.6;">
+                                ${isMobile ? `
+                                <li><strong>1 violation:</strong> Final warning</li>
+                                <li><strong>2+ violations:</strong> Automatic quiz submission</li>
+                                <li><strong>Extended inactivity:</strong> Flagged as suspicious</li>
+                                ` : `
+                                <li><strong>1-2 violations:</strong> Warning messages</li>
+                                <li><strong>3+ violations:</strong> Automatic quiz submission</li>
+                                `}
+                            </ul>
+                            ${isMobile ? `
+                            <h4>📱 Mobile-Specific Instructions:</h4>
+                            <ul style="color: #17a2b8; line-height: 1.6;">
+                                <li>Turn on <strong>Do Not Disturb</strong> mode</li>
+                                <li>Close all other apps before starting</li>
+                                <li>Ensure stable internet connection</li>
+                                <li>Keep your device plugged in or fully charged</li>
+                                <li>Use landscape orientation for better experience</li>
+                            </ul>
+                            ` : ''}
+                        </div>
+                        <p style="font-weight: bold; color: #e74c3c; margin-bottom: 20px;">
+                            Your activity is being monitored for academic integrity.
+                            ${isMobile ? ' Mobile app switching detection is active.' : ''}
+                        </p>
+                        <button onclick="closeSecurityNotice()" 
+                                style="background: #e74c3c; color: white; padding: 15px 30px; border: none; border-radius: 5px; 
+                                       font-size: 16px; cursor: pointer; font-weight: bold; min-height: 44px;">
+                            I UNDERSTAND - START QUIZ
+                        </button>
+                    </div>
+                </div>
+            `;
+            notice.id = 'securityNotice';
+            document.body.appendChild(notice);
+        }
+
+        function closeSecurityNotice() {
+            const notice = document.getElementById('securityNotice');
+            if (notice) {
+                notice.remove();
+            }
+            
+            // Scroll to quiz content after closing notice
+            document.getElementById('quizContent').scrollIntoView({ behavior: 'smooth' });
+            
+            // Suggest fullscreen mode
+            setTimeout(() => {
+                if (confirm('📱 For better focus and security, would you like to enter fullscreen mode?\n\n(Recommended for quiz integrity)')) {
+                    toggleFullscreen();
+                }
+            }, 1000);
+        }
+
+        // Timer functionality
+        function startTimer() {
+            quizStartTime = new Date();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            const elapsed = Math.floor((new Date() - quizStartTime) / 1000);
+            const remaining = Math.max(0, quizData.timeLimit - elapsed);
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            
+            document.getElementById('timer').textContent = 
+                `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color when time is running low
+            const timerElement = document.getElementById('timer');
+            if (remaining <= 300) { // 5 minutes
+                timerElement.style.backgroundColor = '#e74c3c';
+            } else if (remaining <= 600) { // 10 minutes
+                timerElement.style.backgroundColor = '#f39c12';
+            }
+            
+            if (remaining === 0) {
+                clearInterval(timerInterval);
+                alert('Time is up! Quiz will be submitted automatically.');
+                submitQuiz();
+            }
+        }
+
+        // Progress tracking
+        function updateProgress() {
+            const form = document.getElementById('quizForm');
+            const totalQuestions = quizData.questions;
+            let answeredQuestions = 0;
+
+            // Count answered questions
+            for (let i = 1; i <= totalQuestions; i++) {
+                const questionElements = form.querySelectorAll(`[name="q${i}"]`);
+                let answered = false;
+
+                questionElements.forEach(element => {
+                    if (element.type === 'radio' && element.checked) {
+                        answered = true;
+                    } else if (element.type === 'checkbox' && element.checked) {
+                        answered = true;
+                    } else if (element.type === 'textarea' && element.value.trim() !== '') {
+                        answered = true;
+                    }
+                });
+
+                if (answered) answeredQuestions++;
+            }
+
+            const progress = (answeredQuestions / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        // Add event listeners for progress tracking
+        document.getElementById('quizForm').addEventListener('change', updateProgress);
+        document.getElementById('quizForm').addEventListener('input', updateProgress);
+
+        // Save progress to localStorage
+        function saveProgress() {
+            const formData = new FormData(document.getElementById('quizForm'));
+            const progress = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (progress[key]) {
+                    progress[key].push(value);
+                } else {
+                    progress[key] = [value];
+                }
+            }
+            
+            progress.timestamp = new Date().toISOString();
+            localStorage.setItem('unit4QuizProgress', JSON.stringify(progress));
+            
+            alert('Progress saved successfully!');
+        }
+
+        // Load saved progress
+        function loadSavedProgress() {
+            const saved = localStorage.getItem('unit4QuizProgress');
+            if (saved) {
+                const progress = JSON.parse(saved);
+                const form = document.getElementById('quizForm');
+                
+                for (let [key, value] of Object.entries(progress)) {
+                    if (key === 'timestamp') continue;
+                    
+                    const elements = form.querySelectorAll(`[name="${key}"]`);
+                    elements.forEach(element => {
+                        if (element.type === 'radio') {
+                            if (value.includes(element.value)) {
+                                element.checked = true;
+                            }
+                        } else if (element.type === 'checkbox') {
+                            if (value.includes(element.value)) {
+                                element.checked = true;
+                            }
+                        } else if (element.type === 'textarea') {
+                            element.value = value[0] || '';
+                        }
+                    });
+                }
+                
+                updateProgress();
+            }
+        }
+
+        // Submit quiz
+        function submitQuiz() {
+            // Deactivate security monitoring
+            quizActive = false;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+
+            const form = document.getElementById('quizForm');
+            const formData = new FormData(form);
+            const answers = {};
+            
+            // Collect answers
+            for (let [key, value] of formData.entries()) {
+                if (answers[key]) {
+                    answers[key].push(value);
+                } else {
+                    answers[key] = [value];
+                }
+            }
+
+            // Calculate score
+            let correct = 0;
+            const results = [];
+
+            for (let [question, correctAnswer] of Object.entries(quizData.answers)) {
+                const userAnswer = answers[question];
+                let isCorrect = false;
+
+                if (question === 'q18') {
+                    // Code writing question - always mark as correct for now (manual grading needed)
+                    isCorrect = userAnswer && userAnswer[0] && userAnswer[0].trim().length > 10;
+                } else if (Array.isArray(correctAnswer)) {
+                    // Multiple choice questions
+                    if (userAnswer && Array.isArray(userAnswer)) {
+                        const userSet = new Set(userAnswer);
+                        const correctSet = new Set(correctAnswer);
+                        isCorrect = userSet.size === correctSet.size && 
+                                   [...userSet].every(x => correctSet.has(x));
+                    }
+                } else {
+                    // Single choice questions
+                    isCorrect = userAnswer && userAnswer[0] === correctAnswer;
+                }
+
+                if (isCorrect) correct++;
+                
+                results.push({
+                    question: question,
+                    userAnswer: userAnswer || ['Not answered'],
+                    correctAnswer: correctAnswer,
+                    correct: isCorrect
+                });
+            }
+
+            const percentage = Math.round((correct / quizData.questions) * 100);
+            const passed = correct >= quizData.passingScore;
+
+            displayResults(correct, percentage, passed, results);
+            
+            // Submit results to Netlify Forms for database recording
+            submitResultsToDatabase(correct, percentage, passed, results);
+            
+            // Include security violations in the results
+            const securityViolations = sessionStorage.getItem('securityViolations') || 'None';
+            const securityLog = JSON.parse(sessionStorage.getItem('securityLog') || '[]');
+            
+            console.log('🔒 Security Summary:', {
+                violations: securityViolations,
+                tabSwitches: tabSwitchCount,
+                totalWarnings: warningCount,
+                detailedLog: securityLog
+            });
+            
+            // Record quiz completion and prevent future attempts
+            const studentId = sessionStorage.getItem('studentId');
+            if (studentId) {
+                // Mark as completed in multiple ways for security
+                const completedIds = JSON.parse(localStorage.getItem('completedStudentIds_unit4') || '[]');
+                if (!completedIds.includes(studentId)) {
+                    completedIds.push(studentId);
+                    localStorage.setItem('completedStudentIds_unit4', JSON.stringify(completedIds));
+                }
+                
+                // CRITICAL: Mark quiz as permanently completed for this student ID
+                const completedKey = `unit4_quiz_completed_${studentId}`;
+                const completionData = {
+                    timestamp: new Date().toISOString(),
+                    score: percentage,
+                    passed: passed,
+                    attempts: 1
+                };
+                localStorage.setItem(completedKey, JSON.stringify(completionData));
+                console.log(`🔒 PERMANENTLY marked Unit 4 quiz as completed for: ${studentId}`);
+                
+                // Also update the attempted IDs to prevent restart
+                saveAttemptedStudentId(studentId);
+            }
+            
+            // Remove beforeunload warning since quiz is complete
+            window.removeEventListener('beforeunload', function() {});
+            window.onbeforeunload = null;
+            
+            // Clear saved progress
+            localStorage.removeItem('unit4QuizProgress');
+        }
+
+        // Submit results to Netlify Forms database
+        function submitResultsToDatabase(correct, percentage, passed, results) {
+            const studentId = sessionStorage.getItem('studentId') || 'Unknown';
+            const studentName = sessionStorage.getItem('studentName') || 'Unknown';
+            const completionTime = new Date().toISOString();
+            const quizEndTime = new Date();
+            const timeSpent = Math.round((quizEndTime - quizStartTime) / 1000 / 60); // minutes
+            
+            // Prepare detailed results summary
+            const detailedResults = results.map((result, index) => {
+                return `Q${index + 1}: ${result.correct ? 'Correct' : 'Incorrect'}`;
+            }).join(', ');
+            
+            // Include security information
+            const securityViolations = sessionStorage.getItem('securityViolations') || 'None';
+            const securityLog = JSON.parse(sessionStorage.getItem('securityLog') || '[]');
+            const deviceInfo = `${isMobileDevice ? 'Mobile' : 'Desktop'} - ${navigator.userAgent.substring(0, 100)}`;
+            const securitySummary = `Device: ${isMobileDevice ? 'Mobile' : 'Desktop'}, Tab switches: ${tabSwitchCount}, Total warnings: ${warningCount}, Violations: ${securityViolations}`;
+            
+            // Create form data for Netlify - must include form-name
+            const formData = new FormData();
+            formData.append('form-name', 'unit4-ajax-quiz-results');
+            formData.append('studentId', studentId);
+            formData.append('studentName', studentName);
+            formData.append('score', percentage);
+            formData.append('status', passed ? 'PASSED' : 'FAILED');
+            formData.append('timestamp', completionTime);
+            formData.append('correctAnswers', correct);
+            formData.append('totalQuestions', quizData.questions);
+            formData.append('timeSpent', timeSpent);
+            formData.append('detailedResults', detailedResults);
+            formData.append('quizUnit', 'Unit 4 - AJAX and JSON');
+            formData.append('securitySummary', securitySummary);
+            formData.append('securityLog', JSON.stringify(securityLog));
+            formData.append('deviceInfo', deviceInfo);
+            formData.append('isMobileDevice', isMobileDevice ? 'Yes' : 'No');
+            
+            console.log('📤 Submitting Unit 4 results to database:', {
+                studentId, studentName, score: percentage, status: passed ? 'PASSED' : 'FAILED'
+            });
+            
+            // Try multiple submission methods for compatibility
+            submitToNetlifyForms(formData);
+        }
+
+        // Try Netlify Forms submission
+        function submitToNetlifyForms(formData) {
+            // Detect if we're on Netlify hosting
+            const isNetlify = window.location.hostname.includes('netlify.app') || 
+                             window.location.hostname.includes('netlify.com') ||
+                             document.querySelector('meta[name="netlify"]');
+            
+            let submitUrl = '/';
+            
+            // If on GitHub Pages, try to submit to your Netlify site directly
+            if (window.location.hostname.includes('github.io')) {
+                console.log('⚠️ GitHub Pages detected - Netlify Forms not available here');
+                console.log('📡 To enable automatic database recording, deploy this to Netlify');
+                submitUrl = 'https://fastidious-tartufo-752929.netlify.app/';
+            }
+            
+            console.log('📤 Submitting to:', submitUrl);
+            
+            fetch(submitUrl, {
+                method: 'POST',
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams(formData).toString()
+            }).then(response => {
+                console.log('📡 Response status:', response.status);
+                if (response.ok || response.status === 200) {
+                    console.log('✅ Results submitted successfully to database');
+                    showSuccessMessage('Unit 4 Quiz results submitted! Check Netlify dashboard to confirm.');
+                    return true;
+                } else {
+                    console.warn('⚠️ Response not OK:', response.status);
+                }
+            }).catch(error => {
+                console.warn('⚠️ Netlify Forms submission failed:', error.message);
+                showSuccessMessage('Please download results as backup.');
+            });
+        }
+
+        function showSuccessMessage(customMessage = null) {
+            const message = customMessage || 'Your Unit 4 quiz results have been recorded. Please download your results file and submit it to your instructor.';
+            
+            const successDiv = document.createElement('div');
+            successDiv.innerHTML = `
+                <div class="alert alert-success" style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; 
+                     padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #28a745;">
+                    <h4>✅ Success!</h4>
+                    <p>${message}</p>
+                </div>
+            `;
+            const existingSuccess = document.querySelector('#results .alert-success');
+            if (!existingSuccess) {
+                document.getElementById('results').appendChild(successDiv);
+            }
+        }
+
+        // Display results
+        function displayResults(correct, percentage, passed, results) {
+            const resultsDiv = document.getElementById('results');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const feedback = document.getElementById('feedback');
+            const answerReview = document.getElementById('answerReview');
+
+            // Get student information
+            const studentId = sessionStorage.getItem('studentId') || 'Unknown';
+            const studentName = sessionStorage.getItem('studentName') || 'Unknown';
+            const completionTime = new Date().toLocaleString();
+            const securityViolations = sessionStorage.getItem('securityViolations') || 'None';
+
+            // Score display with student info
+            let scoreClass = 'score-needs-improvement';
+            if (percentage >= 90) scoreClass = 'score-excellent';
+            else if (percentage >= 70) scoreClass = 'score-good';
+
+            scoreDisplay.innerHTML = `
+                <div class="${scoreClass}">
+                    🎯 Unit 4 Quiz Score: ${percentage}% (${correct}/${quizData.questions})
+                </div>
+                <div style="font-size: 16px; margin-top: 10px; color: #666;">
+                    👤 Student: ${studentName} (ID: ${studentId})<br>
+                    📅 Completed: ${completionTime}<br>
+                    ⚡ Topic: AJAX and JSON<br>
+                    ${passed ? '✅ PASSED' : '❌ FAILED'} (Passing: 70%)<br>
+                    🔒 Security: ${tabSwitchCount} violations, ${warningCount} warnings<br>
+                    ${isMobileDevice ? '📱' : '💻'} Device: ${isMobileDevice ? 'Mobile' : 'Desktop'}
+                </div>
+                ${securityViolations !== 'None' ? `
+                <div style="background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; 
+                           padding: 10px; margin: 10px 0; border-radius: 5px;">
+                    <strong>⚠️ Security Notice:</strong> ${securityViolations}
+                </div>` : ''}
+            `;
+
+            // Feedback
+            let feedbackText = '';
+            if (percentage >= 90) {
+                feedbackText = '🎉 Excellent work! You have mastered asynchronous JavaScript, AJAX, and JSON handling.';
+            } else if (percentage >= 80) {
+                feedbackText = '👍 Great job! You have a solid understanding of AJAX and JSON with minor areas to review.';
+            } else if (percentage >= 70) {
+                feedbackText = '✅ Good work! You passed, but consider reviewing asynchronous programming concepts you missed.';
+            } else {
+                feedbackText = '📚 You need more practice with AJAX and JSON. Review the Unit 4 materials and try again.';
+            }
+
+            feedback.innerHTML = `<p style="font-size: 16px; text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">${feedbackText}</p>`;
+
+            // Answer review
+            let reviewHTML = '<h3>📋 Answer Review:</h3>';
+            
+            const questionTexts = [
+                'What does AJAX stand for?',
+                'Which method creates a new XMLHttpRequest object?',
+                'What is the primary advantage of asynchronous requests?',
+                'What does JSON stand for?',
+                'Which XMLHttpRequest property contains the server response?',
+                'What readyState value indicates request completion?',
+                'Which modern method is the alternative to XMLHttpRequest?',
+                'What method converts a JavaScript object to JSON?',
+                'What method converts JSON string to JavaScript object?',
+                'Which HTTP status code indicates success?',
+                'XMLHttpRequest code analysis',
+                'What is the main advantage of fetch() over XMLHttpRequest?',
+                'Which are valid JSON data types?',
+                'What keyword is used with fetch() to wait for response?',
+                'Which HTTP methods are commonly used in AJAX?',
+                'What is CORS and why is it important?',
+                'Fetch() code analysis - what is wrong?',
+                'Write an async function with error handling',
+                'What is the purpose of Content-Type header?',
+                'Which are best practices for AJAX development?'
+            ];
+
+            results.forEach((result, index) => {
+                const bgColor = result.correct ? 'answer-correct' : 'answer-incorrect';
+                const icon = result.correct ? '✅' : '❌';
+                reviewHTML += `
+                    <div class="answer-item ${bgColor}">
+                        <strong>${icon} Question ${index + 1}:</strong> ${questionTexts[index]}<br>
+                        <strong>Your Answer:</strong> ${formatAnswer(result.userAnswer)}<br>
+                        <strong>Correct Answer:</strong> ${formatAnswer(result.correctAnswer)}
+                    </div>
+                `;
+            });
+
+            answerReview.innerHTML = reviewHTML;
+            resultsDiv.classList.add('show');
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function formatAnswer(answer) {
+            if (!answer) return 'Not answered';
+            if (Array.isArray(answer)) {
+                if (answer.length === 1 && answer[0] === '') return 'Not answered';
+                return answer.join(', ');
+            }
+            if (typeof answer === 'string' && answer.length > 50) {
+                return answer.substring(0, 50) + '...';
+            }
+            return answer;
+        }
+
+        // Reset quiz
+        function resetQuiz() {
+            if (confirm('Are you sure you want to reset the quiz? All progress will be lost.')) {
+                // Deactivate security monitoring
+                quizActive = false;
+                tabSwitchCount = 0;
+                warningCount = 0;
+                
+                // Clear all form data
+                document.getElementById('quizForm').reset();
+                
+                // Clear progress and security data
+                localStorage.removeItem('unit4QuizProgress');
+                sessionStorage.removeItem('securityLog');
+                sessionStorage.removeItem('securityViolations');
+                
+                // Reset progress bar
+                document.getElementById('progressFill').style.width = '0%';
+                
+                // Hide results
+                document.getElementById('results').classList.remove('show');
+                
+                // Reset timer display
+                document.getElementById('timer').textContent = 'Time: 00:00';
+                document.getElementById('timer').style.backgroundColor = '#2c3e50';
+                
+                // Update fullscreen button
+                updateFullscreenButton();
+                
+                alert('Quiz has been reset. Security monitoring will restart when you begin again.');
+            }
+        }
+
+        // Retake quiz
+        function retakeQuiz() {
+            resetQuiz();
+        }
+
+        // Download results
+        function downloadResults() {
+            const studentId = sessionStorage.getItem('studentId') || 'Unknown';
+            const studentName = sessionStorage.getItem('studentName') || 'Unknown';
+            const completionTime = new Date().toLocaleString();
+            
+            const resultsText = document.getElementById('results').textContent;
+            const header = `Unit 4: AJAX and JSON - Quiz Results\n` +
+                          `==========================================\n` +
+                          `Student: ${studentName}\n` +
+                          `Student ID: ${studentId}\n` +
+                          `Completion Date: ${completionTime}\n` +
+                          `Quiz Topic: Asynchronous JavaScript, AJAX, and JSON\n` +
+                          `==========================================\n\n`;
+            
+            const fullResults = header + resultsText;
+            
+            const blob = new Blob([fullResults], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Unit4_AJAX_JSON_Quiz_${studentId}_${studentName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
