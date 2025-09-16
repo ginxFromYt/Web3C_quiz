@@ -152,145 +152,164 @@
     </div>
 
     <script>
-        // Code Protection Functions
+        // Balanced Code Protection - Prevents F12 bypass without false positives
         (function() {
             'use strict';
             
-            // Disable right-click context menu
-            document.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                alert('Right-click is disabled on this page!');
+            let protectionActive = true;
+            let f12PressCount = 0;
+            let lastF12Time = 0;
+            
+            // Function to show warning and block dev tools
+            function blockDevTools(reason) {
+                alert('⚠️ Developer Tools Access Blocked!\n\nReason: ' + reason + '\n\nThis form is protected. Please use the form normally.');
                 return false;
-            });
+            }
             
-            // Disable F12, Ctrl+Shift+I, Ctrl+U, Ctrl+Shift+C, Ctrl+Shift+J
-            document.addEventListener('keydown', function(e) {
-                // F12 (Developer Tools)
-                if (e.keyCode === 123) {
+            // Enhanced F12 blocking with bypass prevention
+            function handleKeyPress(e) {
+                const currentTime = Date.now();
+                
+                // Specifically handle F12 with bypass prevention
+                if (e.keyCode === 123 || e.key === 'F12') {
                     e.preventDefault();
-                    alert('Developer tools are disabled!');
+                    e.stopImmediatePropagation();
+                    e.stopPropagation();
+                    
+                    // Track F12 attempts to prevent rapid pressing bypass
+                    if (currentTime - lastF12Time < 1000) { // Within 1 second
+                        f12PressCount++;
+                    } else {
+                        f12PressCount = 1;
+                    }
+                    lastF12Time = currentTime;
+                    
+                    blockDevTools('F12 Developer Tools (Attempt #' + f12PressCount + ')');
                     return false;
                 }
                 
-                // Ctrl+Shift+I (Inspector)
-                if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+                // Block other developer shortcuts
+                if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.key === 'I')) { // Ctrl+Shift+I
                     e.preventDefault();
-                    alert('Developer tools are disabled!');
+                    e.stopImmediatePropagation();
+                    blockDevTools('Developer Tools Shortcut (Ctrl+Shift+I)');
                     return false;
                 }
                 
-                // Ctrl+U (View Source)
-                if (e.ctrlKey && e.keyCode === 85) {
+                if (e.ctrlKey && (e.keyCode === 85 || e.key === 'u' || e.key === 'U')) { // Ctrl+U
                     e.preventDefault();
-                    alert('View source is disabled!');
+                    e.stopImmediatePropagation();
+                    blockDevTools('View Source (Ctrl+U)');
                     return false;
                 }
                 
-                // Ctrl+Shift+C (Select Element)
-                if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+                if (e.ctrlKey && e.shiftKey && (e.keyCode === 67 || e.key === 'C')) { // Ctrl+Shift+C
                     e.preventDefault();
-                    alert('Element selection is disabled!');
+                    e.stopImmediatePropagation();
+                    blockDevTools('Element Inspector (Ctrl+Shift+C)');
                     return false;
                 }
                 
-                // Ctrl+Shift+J (Console)
-                if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+                if (e.ctrlKey && e.shiftKey && (e.keyCode === 74 || e.key === 'J')) { // Ctrl+Shift+J
                     e.preventDefault();
-                    alert('Console is disabled!');
+                    e.stopImmediatePropagation();
+                    blockDevTools('Console (Ctrl+Shift+J)');
                     return false;
                 }
                 
-                // Ctrl+Shift+K (Console in Firefox)
-                if (e.ctrlKey && e.shiftKey && e.keyCode === 75) {
+                if (e.ctrlKey && e.shiftKey && (e.keyCode === 75 || e.key === 'K')) { // Ctrl+Shift+K
                     e.preventDefault();
-                    alert('Console is disabled!');
+                    e.stopImmediatePropagation();
+                    blockDevTools('Console (Ctrl+Shift+K)');
                     return false;
                 }
-            });
+                
+                if (e.ctrlKey && (e.keyCode === 83 || e.key === 's' || e.key === 'S')) { // Ctrl+S
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    blockDevTools('Save Page (Ctrl+S)');
+                    return false;
+                }
+            }
             
-            // Disable text selection
-            document.addEventListener('selectstart', function(e) {
+            // Multiple event listeners to prevent bypass
+            document.addEventListener('keydown', handleKeyPress, true);
+            document.addEventListener('keyup', handleKeyPress, true);
+            window.addEventListener('keydown', handleKeyPress, true);
+            
+            // Block right-click with warning
+            function blockRightClick(e) {
                 e.preventDefault();
+                e.stopImmediatePropagation();
+                alert('⚠️ Right-click is disabled on this protected form.');
                 return false;
-            });
+            }
             
-            // Disable drag and drop
-            document.addEventListener('dragstart', function(e) {
-                e.preventDefault();
-                return false;
-            });
+            document.addEventListener('contextmenu', blockRightClick, true);
             
-            // Clear console periodically and detect developer tools
-            let devtools = {
-                open: false,
-                orientation: null
-            };
-            
-            const threshold = 160;
-            const emptyImg = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-            
-            // Check if developer tools are open
-            let checkDevTools = function() {
-                if (window.outerHeight - window.innerHeight > threshold || 
-                    window.outerWidth - window.innerWidth > threshold) {
-                    if (!devtools.open) {
-                        devtools.open = true;
-                        alert('Developer tools detected! Please close them to continue.');
-                        // Redirect to blank page or close window
-                        document.body.innerHTML = '<h1 style="text-align:center; margin-top:50px; color:red;">Access Denied - Developer Tools Detected!</h1>';
+            // Less aggressive developer tools detection (only for very obvious cases)
+            let devToolsCheckCount = 0;
+            let devToolsInterval = setInterval(function() {
+                if (!protectionActive) return;
+                
+                const heightDiff = window.outerHeight - window.innerHeight;
+                const widthDiff = window.outerWidth - window.innerWidth;
+                
+                // Only trigger if very large difference (clear dev tools open)
+                if (heightDiff > 250 || widthDiff > 250) {
+                    devToolsCheckCount++;
+                    
+                    // Only block after multiple detections to avoid false positives
+                    if (devToolsCheckCount > 3) {
+                        alert('⚠️ Developer Tools Detected!\n\nPlease close developer tools to continue using this form.');
+                        devToolsCheckCount = 0; // Reset counter
                     }
                 } else {
-                    devtools.open = false;
+                    devToolsCheckCount = 0; // Reset if normal size
                 }
-            };
+            }, 1000); // Check every second instead of 50ms
             
-            // Run check every 500ms
-            setInterval(checkDevTools, 500);
-            
-            // Additional console detection
-            let element = new Image();
-            element.__defineGetter__('id', function() {
-                devtools.open = true;
-                alert('Console access detected! Redirecting...');
-                document.body.innerHTML = '<h1 style="text-align:center; margin-top:50px; color:red;">Access Denied - Console Usage Detected!</h1>';
+            // Disable text selection and other interactions
+            document.addEventListener('selectstart', function(e) { 
+                e.preventDefault(); 
+                return false; 
             });
             
-            // Log the element to trigger getter if console is open
-            setInterval(function() {
-                console.log(element);
-                console.clear();
-            }, 1000);
-            
-            // Disable printing
-            window.addEventListener('beforeprint', function(e) {
-                e.preventDefault();
-                alert('Printing is disabled on this page!');
-                return false;
+            document.addEventListener('dragstart', function(e) { 
+                e.preventDefault(); 
+                return false; 
             });
             
-            // Disable save as
-            document.addEventListener('keydown', function(e) {
-                if (e.ctrlKey && e.keyCode === 83) { // Ctrl+S
-                    e.preventDefault();
-                    alert('Save function is disabled!');
-                    return false;
-                }
+            // Block printing
+            window.addEventListener('beforeprint', function(e) { 
+                e.preventDefault(); 
+                alert('⚠️ Printing is disabled for this protected form.');
+                return false; 
             });
             
-            // Detect if page is being viewed in frame/iframe
+            // Simple frame busting
             if (window.top !== window.self) {
                 window.top.location = window.self.location;
             }
             
-            // Additional protection against common inspection methods
-            Object.defineProperty(window, 'console', {
-                get: function() {
-                    throw new Error('Console access is blocked!');
-                },
-                set: function() {
-                    throw new Error('Console modification is blocked!');
-                }
-            });
+            // Disable console access with warning instead of blocking
+            let consoleAccessWarned = false;
+            try {
+                let originalConsole = window.console;
+                Object.defineProperty(window, 'console', {
+                    get: function() {
+                        if (!consoleAccessWarned) {
+                            consoleAccessWarned = true;
+                            setTimeout(function() {
+                                alert('⚠️ Console access detected!\n\nThis form is protected. Please use it normally.');
+                            }, 100);
+                        }
+                        return originalConsole;
+                    }
+                });
+            } catch (e) {
+                // Ignore if console protection fails
+            }
             
         })();
 
