@@ -1036,6 +1036,11 @@ async function fetchData(url) {
             session: 'unit4_security_session', 
             cookie: 'unit4_security_cookie'
         };
+        
+        // Modal and animation tracking for smart blur detection
+        let isModalDisplaying = false;
+        let modalCreationTime = 0;
+        let activeModals = new Set();
 
         // Generate browser fingerprint for enhanced security
         function generateBrowserFingerprint() {
@@ -1057,6 +1062,48 @@ async function fetchData(url) {
             };
             
             return btoa(JSON.stringify(fingerprint)).slice(0, 64);
+        }
+
+        // Modal tracking system to prevent false positive tab switch detection
+        function registerModal(modalId) {
+            console.log(`📱 Registering modal: ${modalId}`);
+            activeModals.add(modalId);
+            isModalDisplaying = true;
+            modalCreationTime = Date.now();
+        }
+
+        function unregisterModal(modalId) {
+            console.log(`📱 Unregistering modal: ${modalId}`);
+            activeModals.delete(modalId);
+            isModalDisplaying = activeModals.size > 0;
+            if (!isModalDisplaying) {
+                console.log('📱 All modals closed - tab switch detection reactivated');
+            }
+        }
+
+        function isAnyModalActive() {
+            // Check both our tracking and DOM state
+            const trackedModals = activeModals.size > 0;
+            const domModals = document.querySelectorAll('[id*="Warning"], [id*="warning"], [class*="modal"], [class*="overlay"]');
+            const visibleDomModals = Array.from(domModals).some(modal => 
+                modal.style.display !== 'none' && modal.offsetParent !== null
+            );
+            
+            const timeSinceModalCreation = Date.now() - modalCreationTime;
+            const recentModalActivity = timeSinceModalCreation < 1000; // 1 second buffer
+            
+            const modalActive = trackedModals || visibleDomModals || recentModalActivity;
+            
+            if (modalActive) {
+                console.log(`📱 Modal activity detected:`, {
+                    tracked: trackedModals,
+                    domVisible: visibleDomModals,
+                    recentActivity: recentModalActivity,
+                    timeSince: timeSinceModalCreation
+                });
+            }
+            
+            return modalActive;
         }
 
         // Generate unique session token
@@ -1211,28 +1258,72 @@ async function fetchData(url) {
             });
         }
 
-        // Mobile-specific tab switch detection (immediate, no debouncing)
+        // Mobile-specific tab switch detection with smart modal filtering
         function setupMobileTabSwitchDetection() {
-            console.log('📱 Setting up immediate mobile tab switch detection');
+            console.log('📱 Setting up intelligent mobile tab switch detection with modal filtering');
             
-            // Primary mobile detection via visibilitychange (immediate response)
+            let lastBlurTime = 0;
+            let visibilityChangeTime = 0;
+            
+            // Primary mobile detection via visibilitychange (most reliable)
             document.addEventListener('visibilitychange', function() {
+                visibilityChangeTime = Date.now();
+                
                 if (quizActive && document.hidden) {
-                    console.log('📱 Mobile visibility change detected - page hidden');
+                    // Check if modal is currently active
+                    if (isAnyModalActive()) {
+                        console.log('📱 Visibility change ignored - modal/warning active');
+                        return;
+                    }
+                    
+                    // Additional check: if blur happened very recently, this might be related
+                    const timeSinceBlur = visibilityChangeTime - lastBlurTime;
+                    if (timeSinceBlur < 150) {
+                        console.log('📱 Visibility change ignored - too close to blur event (likely modal animation)');
+                        return;
+                    }
+                    
+                    console.log('📱 Valid mobile visibility change detected - genuine app switch');
                     handleMobileTabSwitch('Mobile app switch detected (visibility change)');
                 }
             });
 
-            // Secondary detection via focus/blur (iOS Safari)
+            // Secondary detection via focus/blur (iOS Safari) with smart filtering
             window.addEventListener('blur', function() {
+                lastBlurTime = Date.now();
+                
                 if (quizActive && isMobileDevice) {
-                    console.log('📱 Mobile blur event detected');
-                    // Small delay to prevent double triggering with visibilitychange
+                    console.log('📱 Mobile blur event detected - analyzing...');
+                    
+                    // Immediate check for modal activity
+                    if (isAnyModalActive()) {
+                        console.log('📱 Blur ignored - modal/warning overlay detected');
+                        return;
+                    }
+                    
+                    // Delayed verification to let UI settle
                     setTimeout(() => {
-                        if (quizActive && (document.hidden || !document.hasFocus())) {
-                            handleMobileTabSwitch('Mobile app lost focus (blur event)');
+                        // Re-check modal state after UI operations complete
+                        if (isAnyModalActive()) {
+                            console.log('📱 Blur ignored - modal became active during delay');
+                            return;
                         }
-                    }, 50); // Very short delay, not like desktop
+                        
+                        // Check if document is actually hidden (real app switch)
+                        if (quizActive && (document.hidden || !document.hasFocus())) {
+                            // Double-check: was there a recent visibility change?
+                            const timeSinceVisibilityChange = Date.now() - visibilityChangeTime;
+                            if (timeSinceVisibilityChange < 300) {
+                                console.log('📱 Blur ignored - already handled by visibility change');
+                                return;
+                            }
+                            
+                            console.log('📱 Valid mobile blur detected - genuine app focus loss');
+                            handleMobileTabSwitch('Mobile app lost focus (blur event)');
+                        } else {
+                            console.log('📱 Blur ignored - document still visible/focused (UI animation/modal)');
+                        }
+                    }, 150); // Longer delay to let modal animations complete
                 }
             });
 
@@ -1714,8 +1805,11 @@ async function fetchData(url) {
             }
         }
 
-        // Show mobile-optimized warning
+        // Show mobile-optimized warning with modal tracking
         function showMobileTabSwitchWarning(reason) {
+            // Register this modal to prevent false blur detection
+            registerModal('mobileTabSwitchWarning');
+            
             const warningDiv = document.createElement('div');
             warningDiv.id = 'mobileTabSwitchWarning';
             warningDiv.innerHTML = `
@@ -1772,12 +1866,15 @@ async function fetchData(url) {
             }, 4000);
         }
 
-        // Close mobile security warning
+        // Close mobile security warning and unregister modal
         function closeMobileSecurityWarning() {
             const warning = document.getElementById('mobileTabSwitchWarning');
             if (warning) {
                 warning.remove();
                 console.log('📱 Mobile security warning closed');
+                
+                // Unregister the modal to re-enable tab switch detection
+                unregisterModal('mobileTabSwitchWarning');
             }
             
             // If too many violations, submit quiz
@@ -1954,7 +2051,11 @@ async function fetchData(url) {
         }
 
         // Show tab switch warning
+        // Show desktop tab switch warning with modal tracking
         function showTabSwitchWarning() {
+            // Register this modal to prevent false detection
+            registerModal('tabSwitchWarning');
+            
             // Create warning overlay
             const warningDiv = document.createElement('div');
             warningDiv.id = 'tabSwitchWarning';
@@ -2015,11 +2116,13 @@ async function fetchData(url) {
             }, 3000);
         }
 
-        // Close security warning
+        // Close security warning and unregister modal
         function closeSecurityWarning() {
             const warning = document.getElementById('tabSwitchWarning');
             if (warning) {
                 warning.remove();
+                // Unregister the modal to re-enable tab switch detection
+                unregisterModal('tabSwitchWarning');
             }
             
             // If too many violations, submit quiz
