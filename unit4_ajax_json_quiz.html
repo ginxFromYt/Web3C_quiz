@@ -260,6 +260,56 @@
             color: #e74c3c;
             font-weight: bold;
         }
+
+        /* Mobile warning styles */
+        .mobile-warning {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(220, 53, 69, 0.5);
+            z-index: 25000;
+            max-width: 90vw;
+            text-align: center;
+            animation: mobileWarningPulse 1s ease-in-out;
+        }
+
+        @keyframes mobileWarningPulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        #mobileTabSwitchWarning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(220, 53, 69, 0.95);
+            z-index: 25000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Enhanced mobile detection indicator */
+        .mobile-device .quiz-container::before {
+            content: "📱 MOBILE SECURITY ACTIVE";
+            display: block;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            margin: -30px -30px 20px -30px;
+            border-radius: 8px 8px 0 0;
+        }
     </style>
 </head>
 <body>
@@ -1094,14 +1144,25 @@ async function fetchData(url) {
             }
         }
 
-        // Enhanced tab switch detection with debouncing
+        // Enhanced tab switch detection with separate mobile/desktop handling
         function setupEnhancedTabSwitchDetection() {
+            if (isMobileDevice) {
+                // For mobile devices, use immediate detection without debouncing
+                setupMobileTabSwitchDetection();
+            } else {
+                // For desktop, use debounced detection for false positive prevention
+                setupDesktopTabSwitchDetection();
+            }
+        }
+
+        // Desktop-specific tab switch detection with debouncing
+        function setupDesktopTabSwitchDetection() {
             let visibilityChangeCount = 0;
             let rapidSwitches = 0;
-            const DEBOUNCE_TIME = 1000; // 1 second debounce
+            const DEBOUNCE_TIME = 1000; // 1 second debounce for desktop
             const RAPID_SWITCH_THRESHOLD = 3;
             
-            function handleVisibilityChange() {
+            function handleDesktopVisibilityChange() {
                 const now = Date.now();
                 
                 // Clear previous debounce timer
@@ -1113,7 +1174,7 @@ async function fetchData(url) {
                 if (now - lastVisibilityChange < 500) {
                     rapidSwitches++;
                     if (rapidSwitches > RAPID_SWITCH_THRESHOLD) {
-                        console.warn('🤖 Rapid tab switches detected - possibly false positive');
+                        console.warn('🖥️ Rapid desktop tab switches detected - possibly false positive');
                         return; // Ignore rapid switches
                     }
                 } else {
@@ -1132,24 +1193,72 @@ async function fetchData(url) {
                     }, DEBOUNCE_TIME);
                 } else if (quizActive && !document.hidden) {
                     // Student returned to quiz - log but don't penalize
-                    console.log('✅ Student returned to quiz window');
+                    console.log('✅ Desktop user returned to quiz window');
                 }
             }
             
-            document.addEventListener('visibilitychange', handleVisibilityChange);
+            document.addEventListener('visibilitychange', handleDesktopVisibilityChange);
             
             // Additional focus/blur detection for desktop
-            if (!isMobileDevice) {
-                window.addEventListener('blur', () => {
-                    if (quizActive) {
-                        setTimeout(() => {
-                            if (quizActive && document.hidden) {
-                                handleTabSwitch();
-                            }
-                        }, DEBOUNCE_TIME);
-                    }
-                });
-            }
+            window.addEventListener('blur', () => {
+                if (quizActive) {
+                    setTimeout(() => {
+                        if (quizActive && document.hidden) {
+                            handleTabSwitch();
+                        }
+                    }, DEBOUNCE_TIME);
+                }
+            });
+        }
+
+        // Mobile-specific tab switch detection (immediate, no debouncing)
+        function setupMobileTabSwitchDetection() {
+            console.log('📱 Setting up immediate mobile tab switch detection');
+            
+            // Primary mobile detection via visibilitychange (immediate response)
+            document.addEventListener('visibilitychange', function() {
+                if (quizActive && document.hidden) {
+                    console.log('📱 Mobile visibility change detected - page hidden');
+                    handleMobileTabSwitch('Mobile app switch detected (visibility change)');
+                }
+            });
+
+            // Secondary detection via focus/blur (iOS Safari)
+            window.addEventListener('blur', function() {
+                if (quizActive && isMobileDevice) {
+                    console.log('📱 Mobile blur event detected');
+                    // Small delay to prevent double triggering with visibilitychange
+                    setTimeout(() => {
+                        if (quizActive && (document.hidden || !document.hasFocus())) {
+                            handleMobileTabSwitch('Mobile app lost focus (blur event)');
+                        }
+                    }, 50); // Very short delay, not like desktop
+                }
+            });
+
+            // pagehide event (iOS Safari background detection)
+            window.addEventListener('pagehide', function(e) {
+                if (quizActive && isMobileDevice) {
+                    console.log('📱 Mobile pagehide event detected');
+                    handleMobileTabSwitch('Mobile app sent to background (pagehide event)');
+                }
+            });
+
+            // Additional mobile-specific events
+            window.addEventListener('pageshow', function(e) {
+                if (quizActive && isMobileDevice && e.persisted) {
+                    console.log('📱 Mobile pageshow event detected (returning from background)');
+                    handleMobileTabSwitch('Returned from background app (pageshow event)');
+                }
+            });
+
+            // Android Chrome specific detection
+            document.addEventListener('webkitvisibilitychange', function() {
+                if (quizActive && document.webkitHidden && isMobileDevice) {
+                    console.log('📱 Mobile webkit visibility change detected');
+                    handleMobileTabSwitch('Mobile app switch (webkit visibility change)');
+                }
+            });
         }
 
         // Initialize enhanced security system
@@ -1289,24 +1398,72 @@ async function fetchData(url) {
             setupFullscreenMode();
         }
 
-        // Detect if user is on mobile device
+        // Enhanced mobile device detection
         function detectMobileDevice() {
-            isMobileDevice = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-                            (navigator.maxTouchPoints && navigator.maxTouchPoints > 2) ||
-                            window.screen.width <= 768;
+            // Multiple detection methods for better accuracy
+            const userAgentMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|webOS|Windows Phone/i.test(navigator.userAgent);
+            const touchDevice = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+            const smallScreen = window.screen.width <= 768 || window.screen.height <= 768;
+            const orientationSupport = typeof window.orientation !== 'undefined';
             
-            console.log('📱 Device detection:', {
+            isMobileDevice = userAgentMobile || (touchDevice && smallScreen) || orientationSupport;
+            
+            console.log('📱 Enhanced mobile detection:', {
                 isMobile: isMobileDevice,
-                userAgent: navigator.userAgent,
+                userAgentMobile: userAgentMobile,
+                touchDevice: touchDevice,
                 touchPoints: navigator.maxTouchPoints,
-                screenWidth: window.screen.width
+                smallScreen: smallScreen,
+                screenSize: `${window.screen.width}x${window.screen.height}`,
+                orientationSupport: orientationSupport,
+                userAgent: navigator.userAgent.substring(0, 100) + '...'
             });
 
-            // Add mobile-specific styling
+            // Add mobile-specific styling and indicators
             if (isMobileDevice) {
                 document.body.classList.add('mobile-device');
                 addMobileStyles();
+                console.log('🔒 MOBILE SECURITY ACTIVATED - Tab switching will be strictly monitored');
+                
+                // Show mobile security notice
+                setTimeout(() => {
+                    if (!document.querySelector('.mobile-security-notice')) {
+                        showMobileSecurityNotice();
+                    }
+                }, 1000);
+            } else {
+                console.log('🖥️ DESKTOP DETECTED - Using debounced tab switch detection');
             }
+        }
+
+        // Show mobile security activation notice
+        function showMobileSecurityNotice() {
+            const notice = document.createElement('div');
+            notice.className = 'mobile-security-notice';
+            notice.style.cssText = `
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                background: linear-gradient(135deg, #28a745, #20c997);
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                text-align: center;
+                font-size: 12px;
+                font-weight: bold;
+                z-index: 5000;
+                box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+            `;
+            notice.innerHTML = '📱 MOBILE SECURITY ACTIVE - App switching monitoring enabled';
+            document.body.appendChild(notice);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notice.parentNode) {
+                    notice.remove();
+                }
+            }, 5000);
         }
 
         // Add mobile-specific CSS styles
@@ -1515,23 +1672,45 @@ async function fetchData(url) {
             });
         }
 
-        // Handle mobile-specific tab switching
+        // Enhanced mobile-specific tab switching handler
         function handleMobileTabSwitch(reason) {
+            // Additional verification for mobile (no debouncing needed)
+            if (!quizActive) {
+                console.log('⚠️ Mobile app switch detected but quiz not active - ignoring');
+                return;
+            }
+            
             tabSwitchCount++;
             warningCount++;
             
             const timestamp = new Date().toLocaleTimeString();
-            console.warn(`📱 Mobile violation detected #${tabSwitchCount}: ${reason} at ${timestamp}`);
+            console.warn(`📱 MOBILE VIOLATION #${tabSwitchCount}: ${reason} at ${timestamp}`);
             
-            // Show mobile-specific warning
+            // Enhanced security logging for mobile
+            writeSecurityData(sessionStorage.getItem('studentId'), {
+                action: 'MOBILE_TAB_SWITCH_VIOLATION',
+                reason: reason,
+                violationNumber: tabSwitchCount,
+                timestamp: new Date().toISOString(),
+                deviceType: 'mobile',
+                userAgent: navigator.userAgent.substring(0, 100),
+                fingerprint: browserFingerprint,
+                sessionToken: quizSessionToken
+            });
+            
+            // Show mobile-specific warning immediately
             showMobileTabSwitchWarning(reason);
             
-            // Record the violation
+            // Record the violation in legacy format for compatibility
             recordSecurityViolation('Mobile App Switch', `${reason} (#${tabSwitchCount})`);
             
-            // Take action based on number of violations
-            if (tabSwitchCount >= 2) { // Stricter for mobile
+            // Take action based on number of violations (stricter for mobile)
+            if (tabSwitchCount >= 2) {
+                console.error('🚨 MOBILE: Too many violations - auto-submitting quiz');
                 handleTooManyViolations();
+            } else {
+                // Show warning for first violation
+                alert(`📱 MOBILE SECURITY WARNING\n\n${reason}\n\nViolation #${tabSwitchCount} of 2 allowed\n\nOne more app switch will automatically submit your quiz!\n\nStay in this browser app to continue.`);
             }
         }
 
@@ -1598,30 +1777,21 @@ async function fetchData(url) {
             const warning = document.getElementById('mobileTabSwitchWarning');
             if (warning) {
                 warning.remove();
+                console.log('📱 Mobile security warning closed');
             }
             
             // If too many violations, submit quiz
             if (tabSwitchCount >= 2) { // Stricter threshold for mobile
+                console.log('📱 Mobile: Too many violations - triggering submission');
                 handleTooManyViolations();
             }
         }
 
-        // Setup tab switching and window focus detection
+        // Setup enhanced security detection (key combinations, right-click protection)
         function setupTabSwitchDetection() {
-            // Detect when user switches tabs or applications
-            document.addEventListener('visibilitychange', function() {
-                if (quizActive && document.hidden) {
-                    handleTabSwitch();
-                }
-            });
-
-            // Detect when window loses focus (Alt+Tab, clicking other apps)
-            window.addEventListener('blur', function() {
-                if (quizActive) {
-                    handleTabSwitch();
-                }
-            });
-
+            // NOTE: Visibility detection is now handled by setupEnhancedTabSwitchDetection()
+            // This function only handles key combinations and other security measures
+            
             // Detect key combinations that might be used to cheat
             document.addEventListener('keydown', function(e) {
                 if (quizActive) {
@@ -1645,6 +1815,7 @@ async function fetchData(url) {
                         e.key === 'ContextMenu'
                     ) {
                         e.preventDefault();
+                        console.warn('🚨 Prohibited key combination detected:', e.key);
                         handleSuspiciousActivity('Attempted to use prohibited key combination: ' + 
                             (e.altKey ? 'Alt+' : '') + 
                             (e.ctrlKey ? 'Ctrl+' : '') + 
